@@ -12,7 +12,7 @@ const io = new Server(server);
 app.use(express.static(publicPath));
 
 // game logic
-class Color {
+class RGB {
 	constructor(r,g,b,a=255){
 		this.setColor(r,g,b,a);
 	}
@@ -57,22 +57,9 @@ const game = {
 	width: WIDTH,
 	height: HEIGHT,
 	players: [],
-	colors: [{name: "red", color: new Color(255,0,0)}, {name: "yellow", color: new Color(255,255,0)}, {name: "green", color: new Color(255, 255, 0)}, {name: "blue", color: new Color(0,0,255)}],
+	colors: [{name: "red", rgb: new RGB(255,0,0)}, {name: "yellow", rgb: new RGB(255,255,0)}, {name: "green", rgb: new RGB(0, 255, 0)}, {name: "blue", rgb: new RGB(0,0,255)}],
 }
-
-game.players.push(new Player(game.width/2, game.height/2, game.colors[0]));
-
-function gameStep(){
-	game.players.forEach(player => {
-		// random movement
-		const movementOptions = ["up", "down", "left", "right"];
-		const movement = movementOptions[Math.floor(Math.random() * movementOptions.length)];
-		player.move(movement);
-		io.emit("game-update", game);
-	});
-}
-
-setInterval(gameStep, 1000);
+game.players.push(new Player("testPlayer", game.width/2, game.height/2, game.colors[0]));
 
 
 app.get('/', (req, res) => {
@@ -93,9 +80,11 @@ io.on('connection', (socket) => {
 
 	socket.on('change-color', (data) => {
 		console.log("changing color...")
-		const selectedColor = game.colors.find(c => c.name.toLowerCase() === data.toLowerCase());
-		const player = game.players.find()
-		game.selectedColor = selectedColor;
+		const selectedColor = game.colors.find(c => c.name.toLowerCase() === data.color.toLowerCase());
+		const player = game.players.find(p => p.name === data.name)
+		console.log(player);
+		player.color = selectedColor;
+		console.log(player);
 		io.emit('change-color', game.selectedColor);
 	});
 
@@ -103,5 +92,17 @@ io.on('connection', (socket) => {
 		console.log('User disconnected.');
 	})
 });
+
+function gameStep(){
+	game.players.forEach(player => {
+		// random movement
+		const movementOptions = ["up", "down", "left", "right"];
+		const movement = movementOptions[Math.floor(Math.random() * movementOptions.length)];
+		player.move(movement);
+		io.emit("game-update", game);
+	});
+}
+
+setInterval(gameStep, 1000);
 
 server.listen(port, () => console.log(`App is running on port ${port}.`));

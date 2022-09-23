@@ -11,7 +11,7 @@ window.selectedColor = colors[0];
 // set up ui elements
 const buttons = document.querySelectorAll("#color-btn-group>button");
 buttons.forEach(button => {
-    button.addEventListener('click', () => console.log("hm"));
+    button.addEventListener('click', () => socket.emit('change-color', {name: "testPlayer", color: button.innerHTML.toLowerCase()}));
 })
 
 const drawGame = () => {
@@ -25,14 +25,15 @@ const drawGame = () => {
         pixelData[i+3] = 255;	// A
     }
 
+
     // draw each player
     game.players.forEach(player => {
         // calculate array index
         const i = (player.x * 4) + (game.width * player.y * 4);
-        pixelData[i] = player.color.r;
-        pixelData[i+1] = player.color.g;
-        pixelData[i+2] = player.color.b;
-        pixelData[i+3] = player.color.a;
+        pixelData[i] = player.color.rgb.r;
+        pixelData[i+1] = player.color.rgb.g;
+        pixelData[i+2] = player.color.rgb.b;
+        pixelData[i+3] = player.color.rgb.a;
     });
 
     const myImageData = new ImageData(pixelData, window.game.width, window.game.height);
@@ -57,5 +58,7 @@ socket.on('game-update', (data) => {
 });
 
 socket.on('change-color', (data) => {
-    window.selectedColor = data;
+    console.log(data);
+    window.game.players[0].color = data;
+    console.log(window.game.players[0].color);
 })
