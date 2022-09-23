@@ -57,8 +57,8 @@ class Player {
 }
 
 const connections =  {};
-const WIDTH = 60;
-const HEIGHT = 60;
+const WIDTH = 30;
+const HEIGHT = 30;
 const settings = {
 	width: WIDTH,
 	height: HEIGHT,

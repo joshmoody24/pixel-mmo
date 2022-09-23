@@ -7,6 +7,8 @@ const loginModal = new bootstrap.Modal(document.getElementById('login-modal'));
 loginModal.show();
 const loginForm = document.getElementById('login-form');
 
+const CANVAS_SCALE = 30;
+
 // buttons
 const upBtn = document.getElementById("btn-up");
 upBtn.addEventListener('click', () => {
@@ -45,13 +47,17 @@ const drawGame = () => {
     console.log(game.players);
     game.players.forEach(player => {
         ctx.fillStyle = `rgba(${player.color.rgb.r}, ${player.color.rgb.g}, ${player.color.rgb.b}, ${player.color.rgb.a})`;
-        ctx.fillRect(player.x, player.y, 1, 1);
+        ctx.fillRect(player.x * CANVAS_SCALE, player.y * CANVAS_SCALE, CANVAS_SCALE, CANVAS_SCALE);
+        ctx.font = "16px arial";
+        ctx.fillStyle = "#333";
+        ctx.textAlign = "center";
+        ctx.fillText(player.username, player.x*CANVAS_SCALE + CANVAS_SCALE/2, player.y*CANVAS_SCALE - CANVAS_SCALE*3/7);
     });
 }
 
 function resizeCanvas(){
-    ctx.canvas.height = game.settings.height;
-    ctx.canvas.width = game.settings.width;
+    ctx.canvas.height = game.settings.height * CANVAS_SCALE;
+    ctx.canvas.width = game.settings.width * CANVAS_SCALE;
     canvas.style.width = window.innerWidth + "px";
     const aspect = game.settings.width / game.settings.height;
     canvas.style.height = window.innerWidth / aspect + "px";
