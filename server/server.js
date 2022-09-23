@@ -60,7 +60,7 @@ const game = {
 	colors: [{name: "red", color: new Color(255,0,0)}, {name: "yellow", color: new Color(255,255,0)}, {name: "green", color: new Color(255, 255, 0)}, {name: "blue", color: new Color(0,0,255)}],
 }
 
-game.players.push(new Player(game.width/2, game.height/2, new Color(255,0,0)));
+game.players.push(new Player(game.width/2, game.height/2, game.colors[0]));
 
 function gameStep(){
 	game.players.forEach(player => {
