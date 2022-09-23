@@ -38,9 +38,9 @@ const setBGColor = (color) => {
 };
 
 const drawGame = () => {
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(210,255,255,255)';
-    ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
+    ctx.fillRect(0,0,canvas.width, canvas.height);
     const game = window.game;
     // start with white square
     // draw each player
@@ -58,10 +58,11 @@ const drawGame = () => {
 function resizeCanvas(){
     ctx.canvas.height = game.settings.height * CANVAS_SCALE;
     ctx.canvas.width = game.settings.width * CANVAS_SCALE;
-    canvas.style.width = window.innerWidth + "px";
+    canvas.style.width = document.documentElement.clientWidth + "px";
     const aspect = game.settings.width / game.settings.height;
-    canvas.style.height = window.innerWidth / aspect + "px";
+    canvas.style.height = document.documentElement.clientWidth / aspect + "px";
     //ctx.scale(PIXEL_SCALE,PIXEL_SCALE);
+    console.log(document.documentElement.clientWidth);
 }
 
 const startGame = (username) => {
