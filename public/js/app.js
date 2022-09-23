@@ -1,85 +1,106 @@
-let socket = io();
-
+var socket;
 
 var canvas = document.getElementById("pixel-canvas");
 var ctx = canvas.getContext("2d");
 const gameContainer = document.getElementById("game-container");
+const loginModal = new bootstrap.Modal(document.getElementById('login-modal'));
+loginModal.show();
+const loginForm = document.getElementById('login-form');
 
 // buttons
 const upBtn = document.getElementById("btn-up");
 upBtn.addEventListener('click', () => {
-    console.log("up"); socket.emit("move-player", {name: "testPlayer", direction: "up"})
+    socket.emit("move-player", "up");
 });
 const leftBtn = document.getElementById("btn-left");
-leftBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "left"}));
+leftBtn.addEventListener('click', () => socket.emit("move-player", "left"));
 const toggleBtn = document.getElementById("btn-toggle");
-toggleBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "toggle"}));
+toggleBtn.addEventListener('click', () => socket.emit("move-player", "toggle"));
 const rightBtn = document.getElementById("btn-right");
-rightBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "right"}));
+rightBtn.addEventListener('click', () => socket.emit("move-player", "right"));
 const downBtn = document.getElementById("btn-down");
-downBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "down"}));
-
-const colors = [{name: "red", rgb: [255,0,0]}, {name: "yellow", rgb: [255,255,0]}, {name: "green", rgb: [0,255,0]}, {name: "blue", rgb: [0,0,255]}];
-window.selectedColor = colors[0];
+downBtn.addEventListener('click', () => socket.emit("move-player", "down"));
 
 // set up ui elements
-const buttons = document.querySelectorAll("#color-btn-group>button");
+const buttons = document.querySelectorAll("#color-buttons>button");
 buttons.forEach(button => {
-    button.addEventListener('click', () => socket.emit('change-color', {name: "testPlayer", color: button.innerHTML.toLowerCase()}));
+    button.addEventListener('click', () => {
+        socket.emit('change-color', button.innerHTML.toLowerCase())
+        console.log("changing color")
+    });
 })
+
+const setBGColor = (color) => {
+    document.body.style.backgroundColor = `rgba(${color.rgb.r},${color.rgb.g},${color.rgb.b},0.3)`;
+    console.log(document.body.style.backgroundColor);
+};
 
 const drawGame = () => {
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    ctx.fillStyle = 'rgba(220,255,255,255)';
+    ctx.fillStyle = 'rgba(210,255,255,255)';
     ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
     const game = window.game;
     // start with white square
-
     // draw each player
+    console.log(game.players);
     game.players.forEach(player => {
-        console.log("drawing", player);
         ctx.fillStyle = `rgba(${player.color.rgb.r}, ${player.color.rgb.g}, ${player.color.rgb.b}, ${player.color.rgb.a})`;
         ctx.fillRect(player.x, player.y, 1, 1);
     });
 }
 
 function resizeCanvas(){
-    ctx.canvas.height = game.height;
-    ctx.canvas.width = game.width;
+    ctx.canvas.height = game.settings.height;
+    ctx.canvas.width = game.settings.width;
     canvas.style.width = window.innerWidth + "px";
-    const aspect = game.width / game.height;
+    const aspect = game.settings.width / game.settings.height;
     canvas.style.height = window.innerWidth / aspect + "px";
     //ctx.scale(PIXEL_SCALE,PIXEL_SCALE);
 }
 
-const startGame = async () => {
-    const res = await axios.get('/game-data');
-    window.game = res.data;
-    const game = this.window.game;
-    console.log(game);
-    resizeCanvas();
-    drawGame();
-    // canvas.style.aspectRatio = `${game.width}/${game.height}`;
+const startGame = (username) => {
+    socket = io({query: {username: username}});
+    loginModal.hide();
+
+    socket.on('initialize-game', (data) => {
+        console.log("Initialized game", data);
+        window.game = data;
+        resizeCanvas();
+        drawGame();
+        setBGColor(window.game.player.color);
+    });
+    
+    socket.on('change-color', (data) => {
+        game.players.find(p => p.username === data.username).color = data.color;
+        if(data.username === window.game.player.username) setBGColor(data.color);
+        drawGame();
+    });
+    
+    socket.on('move-player', (data) => {
+        const player = game.players.find(p => p.username === data.username);
+        player.x = data.x;
+        player.y = data.y;
+        drawGame();
+    });
+
+    socket.on('player-disconnect', (username) => {
+        console.log(`${username} disconnected`);
+        game.players = game.players.filter(p => p.username !== username);
+        drawGame();
+    })
+
+    socket.on('player-joined', (player) => {
+        game.players.push(player)
+        drawGame();
+    })
+    
 };
 
 window.addEventListener("resize", resizeCanvas);
 
-startGame();
-
-socket.on('game-update', (data) => {
-    window.game = data;
-    drawGame();
-});
-
-socket.on('change-color', (data) => {
-    window.game.players.find(p => p.name === data.name).color = data.color;
-})
-
-socket.on('move-player', (data) => {
-    const player = game.players.find(p => p.name === data.name);
-    player.x = data.x;
-    player.y = data.y;
-    player[0] = player;
-    console.log(data);
-    drawGame();
-});
+loginForm.onsubmit = async (event) => {
+    const desiredUsername = document.getElementById("username").value;
+    event.preventDefault();
+    const check = await axios.get('/username-check/' + desiredUsername);
+    if(check.data === true) startGame(desiredUsername);
+};

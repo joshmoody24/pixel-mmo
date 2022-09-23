@@ -30,8 +30,8 @@ class RGB {
 }
 
 class Player {
-	constructor(name,x,y,color){
-		this.name = name;
+	constructor(username,x,y,color){
+		this.username = username;
 		this.x = parseInt(x);
 		this.y = parseInt(y);
 		this.color = color;
@@ -49,22 +49,21 @@ class Player {
 		else if(direction === "right"){
 			this.x++;
 		}
-		if(this.x >= game.width) this.x = game.width - 1;
+		if(this.x >= settings.width) this.x = settings.width - 1;
 		if(this.x < 0) this.x = 0;
-		if(this.y >= game.height) this.y = game.height - 1;
+		if(this.y >= settings.height) this.y = settings.height - 1;
 		if(this.y < 0) this.y = 0;
 	}
 }
-const WIDTH = 100;
-const HEIGHT = 50;
-const game = {
+
+const connections =  {};
+const WIDTH = 60;
+const HEIGHT = 60;
+const settings = {
 	width: WIDTH,
 	height: HEIGHT,
-	players: [],
 	colors: [{name: "red", rgb: new RGB(255,0,0)}, {name: "yellow", rgb: new RGB(255,255,0)}, {name: "green", rgb: new RGB(0, 255, 0)}, {name: "blue", rgb: new RGB(0,0,255)}],
 }
-game.players.push(new Player("testPlayer", game.width/2, game.height/2, game.colors[0]));
-
 
 app.get('/', (req, res) => {
 	res.sendFile(__dirname + "/index.html");
@@ -74,34 +73,45 @@ app.get('/game-data', (req, res) => {
 	res.send(game)
 });
 
+const players = () => {
+	return Object.keys(connections).map(key => connections[key]);
+}
+
+app.get('/username-check/:username', (req, res) => {
+	res.send(!players().map(p => p.username).includes(req.params.username))
+})
+
 io.on('connection', (socket) => {
-	console.log("User connected.");
+	const username = socket.handshake.query.username;
+	let player;
+	const socketId = socket.id.toString();
+	console.log(`${username} joined the game.`);
+	const randomColor = settings.colors[Math.floor(Math.random() * settings.colors.length)];
+	connections[socketId] = (new Player(username, Math.random() * settings.width, Math.random() * settings.height, randomColor));
+	player = connections[socket.id];
+	socket.emit('initialize-game', {settings, players: players(), player});
+	socket.broadcast.emit('player-joined', player);
 
-	socket.on('startGame', () => {
-		console.log("starting game...");
-		io.emit('startGame');
-	});
-
-	socket.on('change-color', (data) => {
-		console.log("changing color...")
-		const selectedColor = game.colors.find(c => c.name.toLowerCase() === data.color.toLowerCase());
-		const player = game.players.find(p => p.name === data.name)
-		console.log(player);
+	socket.on('change-color', (colorName) => {
+		console.log(`${username} changed color to ${colorName}`)
+		const selectedColor = settings.colors.find(c => c.name.toLowerCase() === colorName.toLowerCase());
 		player.color = selectedColor;
-		console.log(player);
-		io.emit('change-color', data);
+		io.emit('change-color', {username: player.username, color: selectedColor});
 	});
 
-	socket.on('move-player', (data) => {
-		console.log("moving...")
-		const player = game.players.find(p => p.name === data.name)
-		player.move(data.direction);
+	socket.on('move-player', (direction) => {
+		console.log(`${username} moved ${direction}`)
+		player.move(direction);
 		io.emit('move-player', player);
 	});
 
 	socket.on('disconnect', () => {
-		console.log('User disconnected.');
+		console.log(`${username} (${socketId}) disconnected.`);
+		io.emit('player-disconnect', username);
+		delete connections[socketId];
 	})
+
+	socket.on('connect_error', (err) => console.log("something went wrong", err));
 });
 
 /*

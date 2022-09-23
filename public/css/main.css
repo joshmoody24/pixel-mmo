@@ -1,3 +1,7 @@
+html, body {
+	min-height: 100vh;
+}
+
 #pixel-canvas{
 	image-rendering: pixelated;
 }
@@ -15,7 +19,7 @@
 }
 
 #color-buttons{
-	position: absolute;
+	position: fixed;
 	left: 0;
 	bottom: 0;
 	display: grid;
@@ -23,7 +27,7 @@
 }
 
 #movement-buttons{
-	position: absolute;
+	position: fixed;
 	right: 0;
 	bottom: 0;
 	display: grid;
@@ -44,4 +48,20 @@
 }
 #btn-down{
 	grid-column-start: 2;
+}
+
+.popup-bg{
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	backdrop-filter: brightness(50%) blur(5px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.login-form{
+	padding: 2rem;
 }
