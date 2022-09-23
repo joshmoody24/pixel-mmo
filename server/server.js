@@ -38,10 +38,10 @@ class Player {
 	}
 	move(direction){
 		if(direction === "up"){
-			this.y++;
+			this.y--;
 		}
 		else if (direction === "down"){
-			this.y--;
+			this.y++;
 		}
 		else if(direction === "left"){
 			this.x--;
@@ -49,6 +49,10 @@ class Player {
 		else if(direction === "right"){
 			this.x++;
 		}
+		if(this.x >= game.width) this.x = game.width - 1;
+		if(this.x < 0) this.x = 0;
+		if(this.y >= game.height) this.y = game.height - 1;
+		if(this.y < 0) this.y = 0;
 	}
 }
 const WIDTH = 100;
@@ -85,7 +89,14 @@ io.on('connection', (socket) => {
 		console.log(player);
 		player.color = selectedColor;
 		console.log(player);
-		io.emit('change-color', game.selectedColor);
+		io.emit('change-color', data);
+	});
+
+	socket.on('move-player', (data) => {
+		console.log("moving...")
+		const player = game.players.find(p => p.name === data.name)
+		player.move(data.direction);
+		io.emit('move-player', player);
 	});
 
 	socket.on('disconnect', () => {
@@ -93,6 +104,7 @@ io.on('connection', (socket) => {
 	})
 });
 
+/*
 function gameStep(){
 	game.players.forEach(player => {
 		// random movement
@@ -102,7 +114,7 @@ function gameStep(){
 		io.emit("game-update", game);
 	});
 }
-
 setInterval(gameStep, 1000);
+*/
 
 server.listen(port, () => console.log(`App is running on port ${port}.`));

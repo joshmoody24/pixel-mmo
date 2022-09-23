@@ -1,9 +1,23 @@
 let socket = io();
 
 
-const PIXEL_SCALE = 10;
 var canvas = document.getElementById("pixel-canvas");
 var ctx = canvas.getContext("2d");
+const gameContainer = document.getElementById("game-container");
+
+// buttons
+const upBtn = document.getElementById("btn-up");
+upBtn.addEventListener('click', () => {
+    console.log("up"); socket.emit("move-player", {name: "testPlayer", direction: "up"})
+});
+const leftBtn = document.getElementById("btn-left");
+leftBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "left"}));
+const toggleBtn = document.getElementById("btn-toggle");
+toggleBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "toggle"}));
+const rightBtn = document.getElementById("btn-right");
+rightBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "right"}));
+const downBtn = document.getElementById("btn-down");
+downBtn.addEventListener('click', () => socket.emit("move-player", {name: "testPlayer", direction: "down"}));
 
 const colors = [{name: "red", rgb: [255,0,0]}, {name: "yellow", rgb: [255,255,0]}, {name: "green", rgb: [0,255,0]}, {name: "blue", rgb: [0,0,255]}];
 window.selectedColor = colors[0];
@@ -15,41 +29,40 @@ buttons.forEach(button => {
 })
 
 const drawGame = () => {
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    ctx.fillStyle = 'rgba(220,255,255,255)';
+    ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
     const game = window.game;
     // start with white square
-    const pixelData = new Uint8ClampedArray(4 * window.game.width * window.game.height);
-    for(let i = 0; i < pixelData.length; i+=4){
-        pixelData[i] = 220;	    // R
-        pixelData[i+1] = 255;	// G
-        pixelData[i+2] = 255;	// B
-        pixelData[i+3] = 255;	// A
-    }
-
 
     // draw each player
     game.players.forEach(player => {
-        // calculate array index
-        const i = (player.x * 4) + (game.width * player.y * 4);
-        pixelData[i] = player.color.rgb.r;
-        pixelData[i+1] = player.color.rgb.g;
-        pixelData[i+2] = player.color.rgb.b;
-        pixelData[i+3] = player.color.rgb.a;
+        console.log("drawing", player);
+        ctx.fillStyle = `rgba(${player.color.rgb.r}, ${player.color.rgb.g}, ${player.color.rgb.b}, ${player.color.rgb.a})`;
+        ctx.fillRect(player.x, player.y, 1, 1);
     });
+}
 
-    const myImageData = new ImageData(pixelData, window.game.width, window.game.height);
-    ctx.putImageData(myImageData, 0, 0);
+function resizeCanvas(){
+    ctx.canvas.height = game.height;
+    ctx.canvas.width = game.width;
+    canvas.style.width = window.innerWidth + "px";
+    const aspect = game.width / game.height;
+    canvas.style.height = window.innerWidth / aspect + "px";
+    //ctx.scale(PIXEL_SCALE,PIXEL_SCALE);
 }
 
 const startGame = async () => {
     const res = await axios.get('/game-data');
     window.game = res.data;
     const game = this.window.game;
-    canvas.height = game.height;
-    canvas.width = game.width;
-    canvas.style.width = `${PIXEL_SCALE * game.width}px`;
-    canvas.style.height = `${PIXEL_SCALE * game.height}px`;
-    canvas.style.aspectRatio = `${game.width}/${game.height}`;
+    console.log(game);
+    resizeCanvas();
+    drawGame();
+    // canvas.style.aspectRatio = `${game.width}/${game.height}`;
 };
+
+window.addEventListener("resize", resizeCanvas);
 
 startGame();
 
@@ -59,5 +72,14 @@ socket.on('game-update', (data) => {
 });
 
 socket.on('change-color', (data) => {
-    window.game.players[0].color = data;
+    window.game.players.find(p => p.name === data.name).color = data.color;
 })
+
+socket.on('move-player', (data) => {
+    const player = game.players.find(p => p.name === data.name);
+    player.x = data.x;
+    player.y = data.y;
+    player[0] = player;
+    console.log(data);
+    drawGame();
+});

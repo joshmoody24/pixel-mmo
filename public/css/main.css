@@ -1,5 +1,47 @@
 #pixel-canvas{
 	image-rendering: pixelated;
-	height: 500px;
-	width: 500px;
+}
+
+#game {
+	position: relative;
+}
+
+#ui {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	justify-content: flex-end;
+}
+
+#color-buttons{
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	display: grid;
+	grid-template-columns: 1fr 1fr;	
+}
+
+#movement-buttons{
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+}
+
+#btn-up{
+	grid-column-start: 2;
+}
+#btn-left{
+	grid-column-start: 1;
+}
+#btn-toggle{
+	grid-column-start: 2;
+}
+#btn-right{
+	grid-column-start: 3;
+}
+#btn-down{
+	grid-column-start: 2;
 }
