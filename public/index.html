@@ -30,48 +30,28 @@
 				</div>
 			</div>
 		</nav>
-		<div class="container d-flex justify-content-center">
-			<canvas id="pixel-canvas" width="100" height="100" style="border:1px solid #000000;">
-			</canvas>
-
-
-			<script>
-				var c = document.getElementById("pixel-canvas");
-				var ctx = c.getContext("2d");
-				let roguePixel = {x: parseInt(c.width/2), y: parseInt(c.height/2)};
-				console.log(roguePixel);
-				function gameStep(){
-					const mag = Math.random() > .5 ? 1 : -1;
-					const dir = Math.random() > .5 ? "vertical" : "horizontal";
-					roguePixel = {x: dir === "horizontal" ? roguePixel.x + mag : roguePixel.x, y: dir === "vertical" ? roguePixel.y + mag : roguePixel.y};
-					if(roguePixel.x >= c.width) roguePixel.x = c.width-1;
-					if(roguePixel.x < 0) roguePixel.x = 0;
-					if(roguePixel.y >= c.height) roguePixel.y = c.height-1;
-					if(roguePixel.y < 0) roguePixel.y = 0;
-					const pixelData = new Uint8ClampedArray(4 * c.width * c.height);
-					for(let i = 0; i < pixelData.length; i+=4){
-						pixelData[i] = 255;	// R
-						pixelData[i+1] = 255;	// G
-						pixelData[i+2] = 255;	// B
-						pixelData[i+3] = 255;	// A
-					}
-					const p = (roguePixel.x * 4) + (roguePixel.y * c.width * 4);
-					console.log(p);
-					console.log(roguePixel);
-					pixelData[p+1] = 0; pixelData[p+2] = 0;
-					const myImageData = new ImageData(pixelData, c.width, c.height);
-					ctx.putImageData(myImageData, 0, 0);
-				}
-				gameStep();
-				setInterval(gameStep, 100);
-			</script>
+		<div class="container">
+			<div class="row d-flex justify-content-center">
+				<canvas id="pixel-canvas" width="100" height="100" style="border:1px solid #000000;"></canvas>
+			</div>
+			<div class="row d-flex justify-content-center">
+				<div class="column col-md-8">
+					<h3>Choose your color:</h3>
+					<div class="btn-group-vertical" id="color-btn-group" role="group" aria-label="color picker">
+						<button type="button" class="btn btn-danger">Red</button>
+						<button type="button" class="btn btn-warning">Yellow</button>
+						<button type="button" class="btn btn-success">Green</button>
+						<button type="button" class="btn btn-primary">Blue</button>
+					</div>
+				</div>
+			</div>
 		</div>
 
 
 
-		<!-- Socket.IO Javacript --><!--
+		<!-- Socket.IO Javacript -->
+		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/app.js" charset="utf-8"></script>
-		-->
 	</body>
 </html>
