@@ -58,9 +58,17 @@ const drawGame = () => {
 function resizeCanvas(){
     ctx.canvas.height = game.settings.height * CANVAS_SCALE;
     ctx.canvas.width = game.settings.width * CANVAS_SCALE;
-    canvas.style.width = document.documentElement.clientWidth + "px";
-    const aspect = game.settings.width / game.settings.height;
-    canvas.style.height = document.documentElement.clientWidth / aspect + "px";
+    if(document.documentElement.clientWidth < document.documentElement.clientHeight){
+        canvas.style.width = document.documentElement.clientWidth + "px";
+        const aspect = game.settings.width / game.settings.height;
+        canvas.style.height = document.documentElement.clientWidth / aspect + "px";
+    }
+    else{
+        console.log("alt");
+        canvas.style.height = document.documentElement.clientHeight + "px";
+        const aspect = game.settings.width / game.settings.height;
+        canvas.style.width = document.documentElement.clientHeight * aspect + "px";
+    }
     //ctx.scale(PIXEL_SCALE,PIXEL_SCALE);
     console.log(document.documentElement.clientWidth);
 }
