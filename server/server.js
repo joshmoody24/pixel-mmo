@@ -37,6 +37,9 @@ class Player {
 		this.color = color;
 	}
 	move(direction){
+		const origX= this.x;
+		const origY =  this.y;
+
 		if(direction === "up"){
 			this.y--;
 		}
@@ -53,6 +56,18 @@ class Player {
 		if(this.x < 0) this.x = 0;
 		if(this.y >= settings.height) this.y = settings.height - 1;
 		if(this.y < 0) this.y = 0;
+
+		// check for player collisions
+		let collided = false;
+		players().forEach(p => {
+			if(p.x === this.x && p.y === this.y && p !== this){
+				collided = true;
+			}
+		})
+		if(collided){
+			this.x = origX;
+			this.y = origY;
+		}
 	}
 }
 
