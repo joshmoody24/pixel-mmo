@@ -48,6 +48,7 @@ const startGame = async () => {
     canvas.width = game.width;
     canvas.style.width = `${PIXEL_SCALE * game.width}px`;
     canvas.style.height = `${PIXEL_SCALE * game.height}px`;
+    canvas.style.aspectRatio = `${game.width}/${game.height}`;
 };
 
 startGame();
@@ -58,7 +59,5 @@ socket.on('game-update', (data) => {
 });
 
 socket.on('change-color', (data) => {
-    console.log(data);
     window.game.players[0].color = data;
-    console.log(window.game.players[0].color);
 })
