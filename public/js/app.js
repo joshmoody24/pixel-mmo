@@ -1,5 +1,7 @@
-var socket;
+import { setUpControls } from "./controls.js";
+import { drawGame, resizeCanvas, setBGColor } from "./graphics.js";
 
+var socket;
 var canvas = document.getElementById("pixel-canvas");
 var ctx = canvas.getContext("2d");
 const gameContainer = document.getElementById("game-container");
@@ -7,111 +9,58 @@ const loginModal = new bootstrap.Modal(document.getElementById('login-modal'));
 loginModal.show();
 const loginForm = document.getElementById('login-form');
 
-const CANVAS_SCALE = 30;
-
-// buttons
-const upBtn = document.getElementById("btn-up");
-upBtn.addEventListener('click', () => {
-    socket.emit("move-player", "up");
-});
-const leftBtn = document.getElementById("btn-left");
-leftBtn.addEventListener('click', () => socket.emit("move-player", "left"));
-const toggleBtn = document.getElementById("btn-toggle");
-toggleBtn.addEventListener('click', () => socket.emit("move-player", "toggle"));
-const rightBtn = document.getElementById("btn-right");
-rightBtn.addEventListener('click', () => socket.emit("move-player", "right"));
-const downBtn = document.getElementById("btn-down");
-downBtn.addEventListener('click', () => socket.emit("move-player", "down"));
-
 // set up ui elements
 const buttons = document.querySelectorAll("#color-buttons>button");
 buttons.forEach(button => {
     button.addEventListener('click', () => {
         socket.emit('change-color', button.innerHTML.toLowerCase())
-        console.log("changing color")
     });
 })
 
-const setBGColor = (color) => {
-    document.body.style.backgroundColor = `rgba(${color.rgb.r},${color.rgb.g},${color.rgb.b},0.3)`;
-    console.log(document.body.style.backgroundColor);
-};
-
-const drawGame = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(210,255,255,255)';
-    ctx.fillRect(0,0,canvas.width, canvas.height);
-    const game = window.game;
-    // start with white square
-    // draw each player
-    console.log(game.players);
-    game.players.forEach(player => {
-        ctx.fillStyle = `rgba(${player.color.rgb.r}, ${player.color.rgb.g}, ${player.color.rgb.b}, ${player.color.rgb.a})`;
-        ctx.fillRect(player.x * CANVAS_SCALE, player.y * CANVAS_SCALE, CANVAS_SCALE, CANVAS_SCALE);
-        ctx.font = "16px arial";
-        ctx.fillStyle = "#333";
-        ctx.textAlign = "center";
-        ctx.fillText(player.username, player.x*CANVAS_SCALE + CANVAS_SCALE/2, player.y*CANVAS_SCALE - CANVAS_SCALE*3/7);
-    });
-}
-
-function resizeCanvas(){
-    ctx.canvas.height = game.settings.height * CANVAS_SCALE;
-    ctx.canvas.width = game.settings.width * CANVAS_SCALE;
-    if(document.documentElement.clientWidth < document.documentElement.clientHeight){
-        canvas.style.width = document.documentElement.clientWidth + "px";
-        const aspect = game.settings.width / game.settings.height;
-        canvas.style.height = document.documentElement.clientWidth / aspect + "px";
-    }
-    else{
-        console.log("alt");
-        canvas.style.height = document.documentElement.clientHeight + "px";
-        const aspect = game.settings.width / game.settings.height;
-        canvas.style.width = document.documentElement.clientHeight * aspect + "px";
-    }
-    //ctx.scale(PIXEL_SCALE,PIXEL_SCALE);
-    console.log(document.documentElement.clientWidth);
-}
-
 const startGame = (username) => {
     socket = io({query: {username: username}});
+    setUpControls(socket);
     loginModal.hide();
 
     socket.on('initialize-game', (data) => {
-        console.log("Initialized game", data);
-        window.game = data;
-        resizeCanvas();
-        drawGame();
-        setBGColor(window.game.player.color);
+        try{
+            console.log("Initialized game", data);
+            window.game = data;
+            resizeCanvas(ctx);
+            setBGColor(window.game.player.color);
+            drawGame(ctx);
+            window.player = {actionState: "move"};
+        } catch(e){
+            console.error(e);
+        }
     });
     
     socket.on('change-color', (data) => {
         game.players.find(p => p.username === data.username).color = data.color;
         if(data.username === window.game.player.username) setBGColor(data.color);
-        drawGame();
+        drawGame(ctx);
     });
     
     socket.on('move-player', (data) => {
         const player = game.players.find(p => p.username === data.username);
         player.x = data.x;
         player.y = data.y;
-        drawGame();
+        drawGame(ctx);
     });
 
     socket.on('player-disconnect', (username) => {
         console.log(`${username} disconnected`);
         game.players = game.players.filter(p => p.username !== username);
-        drawGame();
+        drawGame(ctx);
     })
 
     socket.on('player-joined', (player) => {
         game.players.push(player)
-        drawGame();
+        drawGame(ctx);
     })
-    
 };
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => resizeCanvas(ctx));
 
 loginForm.onsubmit = async (event) => {
     const desiredUsername = document.getElementById("username").value;

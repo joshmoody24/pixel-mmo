@@ -1,0 +1,22 @@
+{
+    "width": 25,
+    "height": 25,
+    "colors": [
+        {
+            "name": "red",
+            "hex": "#ff0000"
+        },
+        {
+            "name": "yellow",
+            "hex": "#ffff00"
+        },
+        {
+            "name": "green",
+            "hex": "#00ff00"
+        },
+        {
+            "name": "blue",
+            "hex": "#0000ff"
+        }
+    ]
+}
