@@ -13,23 +13,36 @@ const loginForm = document.getElementById('login-form');
 const buttons = document.querySelectorAll("#color-buttons>button");
 buttons.forEach(button => {
     button.addEventListener('click', () => {
-        socket.emit('change-color', button.innerHTML.toLowerCase())
+        socket.emit('change-color', button.innerText.toLowerCase())
     });
 })
 
+export function handleAction(action){
+    if(action.action === "movement"){
+        socket.emit('move-player', {x: action.x, y: action.y});
+    }
+}
+
 const startGame = (username) => {
     socket = io({query: {username: username}});
-    setUpControls(socket);
+    setUpControls(socket, ctx, handleAction);
     loginModal.hide();
 
     socket.on('initialize-game', (data) => {
         try{
             console.log("Initialized game", data);
             window.game = data;
+            const player = data.players.find(p => p.username === username);
+            window.gameState = {
+                actionState: "move",
+                cursor: {x: 10, y: 10},
+                player: player,
+            };
+
             resizeCanvas(ctx);
             setBGColor(window.game.player.color);
             drawGame(ctx);
-            window.player = {actionState: "move"};
+
         } catch(e){
             console.error(e);
         }
@@ -57,6 +70,10 @@ const startGame = (username) => {
     socket.on('player-joined', (player) => {
         game.players.push(player)
         drawGame(ctx);
+    })
+
+    socket.on('gained-energy', username => {
+        game.players.find(p => p.username === username)?.energy++;
     })
 };
 

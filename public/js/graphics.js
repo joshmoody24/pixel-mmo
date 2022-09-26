@@ -16,9 +16,19 @@ export const drawGame = (ctx) => {
         ctx.textAlign = "center";
         ctx.fillText(player.username, player.x*scale + scale/2, player.y*scale - scale*3/7);
     });
+
+    // draw the cursor
+    const cursor = window.gameState.cursor;
+    if(cursor){
+        ctx.lineWidth = settings.CURSOR_WIDTH;
+        ctx.strokeStyle = "grey";
+        ctx.lineJoin = "round"
+        ctx.strokeRect(cursor.x * scale, cursor.y * scale, scale, scale);
+    }
 }
 
 export function resizeCanvas(ctx){
+    console.log("BEFORE: ", ctx.canvas.width, ctx.canvas.height)
     ctx.canvas.height = game.settings.height * settings.CANVAS_SCALE;
     ctx.canvas.width = game.settings.width * settings.CANVAS_SCALE;
     if(document.documentElement.clientWidth < document.documentElement.clientHeight){
@@ -31,6 +41,8 @@ export function resizeCanvas(ctx){
         const aspect = game.settings.width / game.settings.height;
         ctx.canvas.style.width = document.documentElement.clientHeight * aspect + "px";
     }
+    console.log("AFTER: ", ctx.canvas.width, ctx.canvas.height)
+    drawGame(ctx);
 }
 
 export const setBGColor = (color) => {

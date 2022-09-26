@@ -1,3 +1,4 @@
 {
-    "CANVAS_SCALE": 60
+    "CANVAS_SCALE": 60,
+    "CURSOR_WIDTH": 5
 }

@@ -1,6 +1,8 @@
 {
     "width": 25,
     "height": 25,
+    "startingEnergy": 10,
+    "energyRegenSpeed": 5,
     "colors": [
         {
             "name": "red",

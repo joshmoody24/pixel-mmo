@@ -65,3 +65,12 @@ html, body {
 .login-form{
 	padding: 2rem;
 }
+
+#action-popover{
+	position: fixed;
+	visibility: hidden;
+}
+
+.popover, .popover-body {
+	background-color: #fff7!important;
+}
