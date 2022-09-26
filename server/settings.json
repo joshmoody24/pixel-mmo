@@ -3,22 +3,6 @@
     "height": 25,
     "startingEnergy": 10,
     "energyRegenSpeed": 5,
-    "colors": [
-        {
-            "name": "red",
-            "hex": "#ff0000"
-        },
-        {
-            "name": "yellow",
-            "hex": "#ffff00"
-        },
-        {
-            "name": "green",
-            "hex": "#00ff00"
-        },
-        {
-            "name": "blue",
-            "hex": "#0000ff"
-        }
-    ]
+    "canvasScale": 60,
+    "colors": ["#ff0000", "#00ff00", "#0000ff"]
 }

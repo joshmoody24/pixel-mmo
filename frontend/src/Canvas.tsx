@@ -7,8 +7,6 @@ export default function Canvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const game = useContext(GameContext);
 
-    console.log(canvasRef?.current)
-
     const [displayWidth, setDisplayWidth] = useState(0);
     const [displayHeight, setDisplayHeight] = useState(0);
 
@@ -45,7 +43,6 @@ export default function Canvas() {
       }, [drawGame])
 
     function drawGame(ctx:any, frameCount:number){
-        console.log("drawing...");
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillStyle = 'rgba(210,255,255,255)';
         ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
@@ -53,7 +50,7 @@ export default function Canvas() {
         // start with white square
         // draw each player
         game.players.forEach(player => {
-            ctx.fillStyle = `${player.color.hex}`;
+            ctx.fillStyle = `${player.color}`;
             ctx.fillRect(player.position.x * scale, player.position.y * scale, scale, scale);
             ctx.font = "32px arial";
             ctx.fillStyle = "#333";
@@ -72,6 +69,7 @@ export default function Canvas() {
     }
     
     function resizeCanvas(ctx:any){
+        console.log(game)
         const aspect = game.settings.width / game.settings.height;
         if(canvasRef.current!.parentElement!.clientWidth < canvasRef.current!.parentElement!.clientHeight){
             setDisplayWidth(canvasRef.current!.parentElement!.clientWidth);

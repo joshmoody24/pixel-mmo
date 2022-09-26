@@ -4,8 +4,9 @@ const distance = require("./utils.js");
 class Player {
 	constructor(username,x,y,color){
 		this.username = username;
-		this.x = parseInt(x);
-		this.y = parseInt(y);
+		this.position = {};
+        this.position.x = parseInt(x);
+		this.position.y = parseInt(y);
 		this.color = color;
         this.energy = parseInt(settings.startingEnergy) ?? 1;
 	}

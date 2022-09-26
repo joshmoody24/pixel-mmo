@@ -4,13 +4,13 @@ import Position from "./Position";
 export default interface Player {
     position: Position,
     energy: number,
-    color: Color,
+    color: string,
     username: string,
 }
 
 export const defaultPlayer : Player = {
     position: {x:0,y:0},
     energy: 0,
-    color: defaultColors[0],
+    color: "default",
     username: "default"
 }
