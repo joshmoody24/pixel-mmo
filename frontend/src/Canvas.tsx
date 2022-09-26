@@ -1,6 +1,8 @@
 import React, {useRef, useContext, useEffect, useState} from "react"
+import ActionMenu from "./ActionMenu";
 import GameContext from "./GameContext";
 import Color from "./interfaces/Color";
+import Position from "./interfaces/Position"
 
 export default function Canvas() {
 
@@ -10,9 +12,24 @@ export default function Canvas() {
     const [displayWidth, setDisplayWidth] = useState(0);
     const [displayHeight, setDisplayHeight] = useState(0);
 
+    const [cursorPos, setCursorPos] = useState<Position>({x:0,y:0})
+
+    function handleClick(event:any){
+        event.stopPropagation();
+        console.log(event);
+        const relativeX = event.offsetX / canvasRef.current!.clientWidth;
+        const relativeY = event.offsetY / canvasRef.current!.clientHeight;
+        console.log(relativeX, relativeY);
+        const x = Math.floor((relativeX * canvasRef.current!.width)/game.settings.canvasScale);
+        const y = Math.floor((relativeY * canvasRef.current!.height)/game.settings.canvasScale);
+        const squareWidth = canvasRef.current!.clientWidth / game.settings.width;
+        const popoverX = `${Math.floor((event.offsetX + canvasRef.current!.offsetLeft)/squareWidth)*squareWidth}px`
+        const popoverY = `${Math.floor((event.offsetY + canvasRef.current!.offsetTop)/squareWidth)*squareWidth}px`
+        console.log(popoverX, popoverY)
+    }
+
     useEffect(() => {
-        window.addEventListener('resize', resizeCanvas);
-    
+        window.addEventListener('resize', resizeCanvas);    
         // Cleanup function
         // Remove the event listener when the component is unmounted
         return () => {
@@ -69,7 +86,6 @@ export default function Canvas() {
     }
     
     function resizeCanvas(ctx:any){
-        console.log(game)
         const aspect = game.settings.width / game.settings.height;
         if(canvasRef.current!.parentElement!.clientWidth < canvasRef.current!.parentElement!.clientHeight){
             setDisplayWidth(canvasRef.current!.parentElement!.clientWidth);
@@ -86,11 +102,15 @@ export default function Canvas() {
     };
 
     return (
+        <>
         <canvas
             height={game.settings.height * game.settings.canvasScale}
             width={game.settings.width * game.settings.canvasScale}
             ref={canvasRef}
             style={{height:`${displayHeight}px`, width:`${displayWidth}px`}}
+            onClick={handleClick}
         ></canvas>
+        <ActionMenu style={{display:"fixed", left:cursorPos.x, bottom:cursorPos.y}} />
+        </>
     )
 }

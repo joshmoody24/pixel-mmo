@@ -66,7 +66,6 @@ export default function App() {
     
     socket.on('gained-energy', (username:string) => {
       try{
-        console.log(players);
         players.get(username)!.energy++;
         setPlayers(players);
       } catch(err){
@@ -107,7 +106,6 @@ export default function App() {
         <GridItem colSpan={10} bg='papayawhip' style={{display: "flex", alignItems:"center", justifyContent:"center"}}>
           <Canvas />
         </GridItem>
-
       </Grid>
       </GameContext.Provider>
     </ChakraProvider>
