@@ -6,8 +6,6 @@ const Player = require('./Player');
 const settings = require('./settings.json');
 const cors = require('cors');
 
-console.log(Player);
-
 const publicPath = path.join(__dirname, '/../public');
 const port = process.env.PORT || 8000;
 const app = express();
@@ -50,7 +48,7 @@ io.on('connection', (socket) => {
 		player = connections[socket.id];
 
 		socket.emit('initialize-game', {settings, players: getPlayers(), username});
-		socket.emit('player-joined', player);
+		socket.broadcast.emit('player-joined', player);
 
 		// auto regenerate energy
 		setInterval(() => {
@@ -66,7 +64,6 @@ io.on('connection', (socket) => {
 		});
 
 		socket.on('move-player', (position) => {
-			console.log(position);
 			// todo: check for collisions
 			const moved = player.move(position.x, position.y, getPlayers());
 			if(moved){

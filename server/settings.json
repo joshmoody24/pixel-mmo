@@ -4,5 +4,6 @@
     "startingEnergy": 10,
     "energyRegenSpeed": 5,
     "canvasScale": 60,
-    "colors": ["#ff0000", "#00ff00", "#0000ff"]
+    "colors": ["#ff0000", "#00ff00", "#0000ff"],
+    "startingHealth": 10
 }
