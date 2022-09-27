@@ -75,6 +75,22 @@ io.on('connection', (socket) => {
 			}
 		});
 
+		socket.on('shoot-location', (position) => {
+			// get player at that position
+			const players = getPlayers();
+			const playerAtPos = Object.keys(players).map((key) => players[key]).find(player => player.position.x === position.x && player.position.y === position.y);
+			if(!playerAtPos){
+				console.log(`${username} shot at ${position.x},${position.y}, but there was nobody there`);
+			}
+			else{
+				// make sure the person can shoot
+				const shot = player.attemptShoot(position.x, position.y);
+				if(!shot) return;
+				playerAtPos.takeDamage(1);
+				io.emit('took-damage', {attacker: player, hurtPlayer:playerAtPos, amount:1})
+			}
+		})
+
 		socket.on('disconnect', () => {
 			console.log(`${username} (${socketId}) disconnected.`);
 			io.emit('player-disconnect', username);

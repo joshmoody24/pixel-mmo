@@ -6,6 +6,7 @@ import Position from "../interfaces/Position"
 import Action from "../interfaces/Action"
 import { distance } from "../utils"
 import { propNames } from "@chakra-ui/react";
+import Player from "../interfaces/Player"
 
 interface props {
     onMove: Function,
@@ -23,6 +24,7 @@ export default function Canvas(props:props) {
     const [actionMenuPos, setActionMenuPos] = useState<Position>({x:0,y:0})
     const [showActionMenu, setShowActionMenu] = useState<boolean>(false);
     const [availableActions, setAvailableActions] = useState(new Array<Action>());
+    const [targetedPlayer, setTargetedPlayer] = useState<Player | undefined>(undefined);
 
     function handleClick(event:any){
         event.stopPropagation();
@@ -40,25 +42,27 @@ export default function Canvas(props:props) {
 
         // calculate possible actions
         const player = game.players.get(game.username);
-        const targetingPlayer = Object.keys(game.players).map(key => game.players.get(key)!).find(p => p.position.x === x && p.position.y === y) != null;
+        const targetedPlayer = Array.from(game.players.entries()).find(([username, p]) => p.position.x === x && p.position.y === y)
+        const isTargetingPlayer = targetedPlayer !== undefined;
         
         const shoot = {
             name: "Shoot",
-            action: props.onShoot,
+            action: () => props.onShoot({x,y}),
             cost: Math.ceil(distance(player!.position.x,player!.position.y, x, y)),
             color: "red",
-            disabled: !targetingPlayer,
+            disabled: !isTargetingPlayer,
         }
         const move = {
             name: "Move",
             action: () => props.onMove({x,y}),
             cost: Math.ceil(distance(player!.position.x,player!.position.y, x, y)),
             color: "blue",
-            disabled: targetingPlayer,
+            disabled: isTargetingPlayer,
         }
         const contextMenu = new Array<Action>();
         // is the mouse over a player
-        setAvailableActions([move,shoot])
+        setAvailableActions([move,shoot]);
+        setTargetedPlayer(targetedPlayer ? targetedPlayer[1] : undefined);
     }
 
     useLayoutEffect(() => {
@@ -90,23 +94,16 @@ export default function Canvas(props:props) {
     
         const canvas = canvasRef.current
         const context = canvas?.getContext('2d')
-        resizeCanvas(context);
-
-        // requestRef.current = requestAnimationFrame(animate);
-        
-        //Our draw came here
-
+        resizeCanvas(context);        
         let animationFrameId:number;
-        
         const render = () => {
           //frameCount++
           drawGame(context, 0)
           animationFrameId = window.requestAnimationFrame(render)
         }
-        render()
-        
-       // drawGame(context, 0);
-        
+
+        render()        
+
         return () => {
           window.cancelAnimationFrame(animationFrameId)
         }
@@ -120,7 +117,7 @@ export default function Canvas(props:props) {
         const scale = game.settings.canvasScale;
 
         // draw gridlines
-        ctx.lineWidth="0.5"
+        ctx.lineWidth="2"
         ctx.strokeStyle = "rgba(100,100,100,.5)";
         for(let x = 0; x < ctx.canvas.width; x+=scale){
             ctx.moveTo(x,0);
@@ -134,7 +131,7 @@ export default function Canvas(props:props) {
         } 
 
         // draw each player
-        game.players.forEach(player => {
+        game.players.forEach((player:Player, username:string) => {
             ctx.fillStyle = `${player.color}`;
             ctx.fillRect(player.position.x * scale, player.position.y * scale, scale, scale);
             ctx.font = "32px arial";
@@ -174,10 +171,16 @@ export default function Canvas(props:props) {
             height={game.settings.height * game.settings.canvasScale}
             width={game.settings.width * game.settings.canvasScale}
             ref={canvasRef}
-            style={{height:`${displayHeight}px`, width:`${displayWidth}px`, imageRendering: "pixelated"}}
+            style={{height:`${displayHeight}px`, width:`${displayWidth}px`}}//, imageRendering: "pixelated"}}
             onClick={handleClick}
         ></canvas>
-        <ActionMenu position={actionMenuPos} isOpen={showActionMenu} handleClose={() => setShowActionMenu(false)} actions={availableActions} />
+        <ActionMenu
+            position={actionMenuPos}
+            isOpen={showActionMenu}
+            handleClose={() => setShowActionMenu(false)}
+            actions={availableActions}
+            targetedPlayer={targetedPlayer}
+        />
         </>
     )
 }

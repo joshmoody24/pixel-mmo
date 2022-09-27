@@ -30,6 +30,13 @@ class Player {
         this.energy++;
     }
 
+    attemptShoot(x,y){
+        const requiredEnergy = distance(this.position.x,this.position.y,x,y);
+        if(this.canSpendEnergy(requiredEnergy) == false) return false;
+        this.spendEnergy(requiredEnergy);
+        return true;
+    }
+
 	move(x, y, playerList){
 
         // compute energy

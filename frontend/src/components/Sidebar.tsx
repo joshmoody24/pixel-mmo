@@ -18,7 +18,7 @@ interface props{
 
 export default function Sidebar(props:props){
     return (
-        <Container>
+        <Box mr={5}>
             <Stat>
                 <StatLabel>Energy</StatLabel>
                 <StatNumber>{props.player.energy}</StatNumber>
@@ -27,6 +27,6 @@ export default function Sidebar(props:props){
                 <StatLabel>Health</StatLabel>
                 <StatNumber>{props.player.health}</StatNumber>
             </Stat>
-        </Container>
+            </Box>
     );
 }

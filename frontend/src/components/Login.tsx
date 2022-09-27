@@ -34,7 +34,7 @@ export default function Login(props:props) {
             <ModalHeader>Create your account</ModalHeader>
             <ModalCloseButton />
             <ModalBody pb={6}>
-              <Input ref={initialFocusRef} type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter Username" />
+              <Input required ref={initialFocusRef} type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter Username" />
             </ModalBody>
             <ModalFooter>
               <Button colorScheme='blue' mr={3} type="submit">

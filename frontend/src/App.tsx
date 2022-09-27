@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 
 // 1. import `ChakraProvider` component
-import { Box, Center, ChakraProvider, flexbox } from '@chakra-ui/react'
+import { Box, Center, ChakraProvider, Stack, Flex, Spacer } from '@chakra-ui/react'
 import Nav from "./components/Nav"
 import { Grid, GridItem } from '@chakra-ui/react'
 import Canvas from "./components/Canvas"
@@ -16,98 +16,113 @@ import Position from './interfaces/Position'
 export default function App() {
 
   const [socket, setSocket] = useState<any>(null);
-  const [username, setUsername] = React.useState<string>("default");
-  const [players, setPlayers2] = React.useState(new Map<string, Player>());
+  const [username, setUsername] = React.useState<string>("");
+  const [players, setPlayers] = React.useState(new Map<string, Player>());
   const [settings, setSettings] = React.useState<Settings>(defaultSettings);
 
-  function setPlayers(test:any){
-    console.log("SETTING PLAYERS: ",test.length);
-    console.trace();
-    setPlayers2(test);
-  }
+  // use usecallback to memoize functions
 
-  const createSocketConnection = (username:string) => {
+  const handlePlayerJoined = useCallback((newPlayer:Player) => {
+    try{
+      setPlayers(players.set(newPlayer.username, newPlayer));
+    } catch(err){
+      console.error(err);
+    }
+  },[players]);
+
+  const handleTookDamage = useCallback((data:{attacker:Player,hurtPlayer:Player,amount:number}) => {
+    console.log(`${data.hurtPlayer} took ${data.amount} damage`, data.hurtPlayer)
+    const newPlayers = new Map(players);
+    newPlayers.set(data.hurtPlayer.username, data.hurtPlayer);
+    newPlayers.set(data.attacker.username, data.attacker);
+    setPlayers(newPlayers);
+  },[players])
+
+  const movePlayer = useCallback((destination:Position) => {
+    socket.emit('move-player', destination);
+  },[socket]);
+
+  const shootAt = useCallback((position:Position) => {
+    socket.emit('shoot-location', position);
+  },[socket])
+
+  const handleGameInitialization = useCallback((data: {settings:Settings, players:Map<string,Player>, username:string}) => {
+    console.log("Initialized game", data);
+    const playerMap = new Map<string, Player>();
+    data.players.forEach(p => playerMap.set(p.username, p));
+    setPlayers(playerMap);
+    setSettings(data.settings);
+    setUsername(data.username);
+  },[]);
+
+  const handleColorChange = useCallback((data: {username:string, color:string}) => {
+    players.get(data.username)!.color = settings.colors.get(data.color) ?? "default";
+    setPlayers(players);
+  },[players]);
+
+  const handleMove = useCallback((data:Player) => {
+    try{
+      setPlayers(new Map(players.set(data.username, data)));
+    }
+    catch(err){
+      console.error(err);
+    }
+  },[players]);
+
+  const handleDisconnect = useCallback((username:string) => {
+    console.log(`${username} disconnected`);
+    const newPlayers = new Map(players);
+    newPlayers.delete(username);
+    setPlayers(newPlayers);
+  },[players]);
+
+  const handleGainedEnergy = useCallback((username:string) => {
+    if(!players.get(username)) return;
+    setPlayers(new Map(players.set(username, {...players.get(username)!, energy: players.get(username)!.energy + 1})));
+  },[players]);
+
+  // create socket connection
+  function createSocketSonnection(username:string) {
+    setUsername(username)
     console.log("creating connection to game...")
     const socket = io(`http://${window.location.hostname}:8000?username=${username}`);
     setSocket(socket);
-
-    socket.on('initialize-game', (data: {settings:Settings, players:Map<string,Player>, username:string}) => {
-      try{
-          console.log("Initialized game", data);
-          const playerMap = new Map<string, Player>();
-          data.players.forEach(p => playerMap.set(p.username, p));
-          setPlayers(playerMap);
-          setSettings(data.settings);
-          setUsername(data.username);
-          //resizeCanvas(ctx);
-          //setBGColor(window.game.player.color);
-          //drawGame(ctx);
-  
-      } catch(e){
-          console.error(e);
-      }
-    });
-
-    socket.on('change-color', (data: {username:string, color:string}) => {
-      players.get(data.username)!.color = settings.colors.get(data.color) ?? "default";
-       setPlayers(players);
-    });
-    
-    socket.on('move-player', (data: Player) => {
-      setPlayers(new Map(players.set(data.username, data)));
-    });
-    
-    socket.on('player-disconnect', (username:string) => {
-      try{
-        console.log(`${username} disconnected`);
-        const newPlayers = new Map(players);
-        newPlayers.delete(username);
-        setPlayers(newPlayers);
-      } catch(err){
-        console.error(err);
-      }
-    })
-    
-    socket.on('player-joined', (newPlayer:Player) => {
-      try{
-        console.log("Player joined", newPlayer)
-        setPlayers(new Map(players.set(newPlayer.username, newPlayer)));
-      } catch(err){
-        console.error(err);
-      }
-    })
-    
-    socket.on('gained-energy', (username:string) => {
-      try{
-        if(!players.get(username)) return;
-        setPlayers(new Map(players.set(username, {...players.get(username)!, energy: players.get(username)!.energy + 1})));
-      } catch(err){
-        console.error(err)
-      }
-    })
-
-    /*
-    return () => {
-      socket.close();
-    }
-    */
-  };
-
-
-  console.log(players);
-
-
-  function handleMove(destination:Position) {
-    socket.emit('move-player', destination);
   }
 
-  console.log(typeof players.get);
+  useEffect(() => {
+    const subscribeToEvents = () => {
+      if(!socket) return;
+      socket.on('initialize-game', handleGameInitialization);
+      socket.on('change-color', handleColorChange);
+      socket.on('move-player', handleMove);
+      socket.on('player-disconnect', handleDisconnect)
+      socket.on('player-joined', handlePlayerJoined);
+      socket.on('gained-energy', handleGainedEnergy);
+      socket.on('took-damage', handleTookDamage);
+      return () => {
+        socket.close();
+      }
+    };
+    if(username) subscribeToEvents();
+  }, [
+      socket,
+      username,
+      handlePlayerJoined,
+      handleColorChange,
+      handleDisconnect,
+      handleGainedEnergy,
+      handleGameInitialization
+    ]
+  );
+
   const player = players.get(username);
 
-  if(username==="default"){
+  if(!username){
     return (
       <Center style={{height:"90vh"}}>
-        <Login onLogin={createSocketConnection} />
+        <Login onLogin={(username:string) => {
+          createSocketSonnection(username)
+        }} />
       </Center>
     )
   }
@@ -123,28 +138,18 @@ export default function App() {
     }}>
 
       <Nav />
-      <Grid
-        minHeight="90vh"
-        templateRows='1fr'
-        templateColumns='repeat(12, 1fr)'
-        gap={4}
-      >
-        <GridItem colSpan={2}>
-          {player && (
-            <Sidebar player={player} />
-          )}
-        </GridItem>
-        <GridItem colSpan={10} style={{display: "flex", alignItems:"center", justifyContent:"center"}}>
+      <Flex p={5} h="90vh" justify={{base:"space-between", lg: "center"}} align={{base:"center", lg:"self-start"}} direction={{base: "column", lg: "row"}}>
 
+        {player && (
+          <Sidebar player={player} />
+        )}
 
-          <Canvas
-            onMove={handleMove}
-            onShoot={handleMove}
-          />
+        <Canvas
+          onMove={movePlayer}
+          onShoot={shootAt}
+        />
+        </Flex>
 
-
-        </GridItem>
-      </Grid>
       </GameContext.Provider>
     </ChakraProvider>
   )

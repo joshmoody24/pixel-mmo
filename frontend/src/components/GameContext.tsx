@@ -3,7 +3,7 @@ import Player, {defaultPlayer} from "../interfaces/Player";
 import { defaultSettings } from "../interfaces/Settings";
 
 const GameContext = createContext({
-    players: {},
+    players: new Map<string,Player>(),
     username: "default",
     settings: defaultSettings,
     cursor: {x:0, y:0, active:false},
