@@ -1,5 +1,5 @@
 import React, {useState} from "react"
-import {Button, Popover, PopoverTrigger, PopoverContent, PopoverBody, PopoverFooter, PopoverHeader, PopoverCloseButton, PopoverArrow, ButtonGroup} from "@chakra-ui/react"
+import {Button, Popover, PopoverTrigger, PopoverContent, PopoverBody, PopoverFooter, PopoverHeader, PopoverCloseButton, PopoverArrow, ButtonGroup } from "@chakra-ui/react"
 import Position from '../interfaces/Position'
 import Action from "../interfaces/Action"
 import Player from "../interfaces/Player"
@@ -9,10 +9,13 @@ interface props {
     isOpen: boolean,
     actions: Action[],
     handleClose: Function,
-    targetedPlayer: Player
+    targetedPlayer?: Player,
+    spacing?: number,
 }
 
 export default function ActionMenu(props:props) {
+
+  const spacing = props.spacing ?? 50;
 
     const enemyInfo = (
       <>
@@ -28,7 +31,8 @@ export default function ActionMenu(props:props) {
           returnFocusOnClose={false}
           isOpen={props.isOpen}
           //onClose={close}
-          placement="right"
+          placement="top"
+          offset={[0,spacing]}
           closeOnBlur={false}
         >
           <PopoverTrigger>
@@ -36,7 +40,6 @@ export default function ActionMenu(props:props) {
           </PopoverTrigger>
           <PopoverContent>
             <PopoverHeader fontWeight="semibold">{props.targetedPlayer ? `Enemy: ${props.targetedPlayer.username}` : "Actions"}</PopoverHeader>
-            <PopoverArrow />
             <PopoverCloseButton onClick={() => props.handleClose()} />
             <PopoverBody>
               {props.targetedPlayer ? enemyInfo : "Select an action"}

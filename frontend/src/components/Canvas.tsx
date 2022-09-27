@@ -26,6 +26,10 @@ export default function Canvas(props:props) {
     const [availableActions, setAvailableActions] = useState(new Array<Action>());
     const [targetedPlayer, setTargetedPlayer] = useState<Player | undefined>(undefined);
 
+    const squareWidth = (canvasRef.current?.clientWidth ?? 0) / game.settings.width;
+    const spacing = 1.1;
+    console.log(squareWidth)
+
     function handleClick(event:any){
         event.stopPropagation();
         const relativeX = event.nativeEvent.offsetX / canvasRef.current!.clientWidth;
@@ -34,7 +38,6 @@ export default function Canvas(props:props) {
         const y = Math.floor((relativeY * canvasRef.current!.height)/game.settings.canvasScale);
         setCursorPos({x,y})
 
-        const squareWidth = canvasRef.current!.clientWidth / game.settings.width;
         const popoverX = `${Math.floor((event.offsetX + canvasRef.current!.offsetLeft)/squareWidth)*squareWidth}px`
         const popoverY = `${Math.floor((event.offsetY + canvasRef.current!.offsetTop)/squareWidth)*squareWidth}px`
         setShowActionMenu(true);
@@ -180,6 +183,7 @@ export default function Canvas(props:props) {
             handleClose={() => setShowActionMenu(false)}
             actions={availableActions}
             targetedPlayer={targetedPlayer}
+            spacing={squareWidth * spacing}
         />
         </>
     )
