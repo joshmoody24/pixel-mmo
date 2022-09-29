@@ -10,7 +10,7 @@ import {
     Flex,
     Container,
   } from '@chakra-ui/react'
-import Player from "../interfaces/Player"
+import Player from "../../../interfaces/IPlayer"
 
 interface props{
     player: Player

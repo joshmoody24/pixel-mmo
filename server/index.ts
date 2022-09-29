@@ -1,10 +1,15 @@
+import { IncomingMessage, ServerResponse } from "http";
+
 const http = require('http');
 const path = require('path');
 const express = require('express');
 const { Server } = require('socket.io');
-const Player = require('./Player');
-const settings = require('./settings.json');
 const cors = require('cors');
+
+import Settings from "../interfaces/Settings";
+import Position from "../interfaces/Position";
+import Player from "./Player";
+const settings:Settings = require('./settings.json');
 
 const publicPath = path.join(__dirname, '/../public');
 const port = process.env.PORT || 8000;
@@ -19,35 +24,39 @@ const io = require("socket.io")(server, {
 
 // <div class="popover bs-popover-auto fade show" role="tooltip" id="popover319061" data-popper-placement="right" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(362px, 213px);"><div class="popover-arrow" style="position: absolute; top: 0px; transform: translate(0px, 10px);"></div><h3 class="popover-header">Popover title</h3></div>
 
-const connections =  {};
+const connections =  new Map<string,string>();
+const players = new Map<string,Player>();
 
-app.get('/', (req, res) => {
-	res.sendFile(__dirname + "/index.html");
-});
+const playerList = () => Object.keys(players).map((key) => players.get(key)!);
 
+/*
 app.get('/game-data', (req, res) => {
 	res.send(game)
 });
+*/
 
-const getPlayers = () => {
-	return Object.keys(connections).map(key => connections[key]);
-}
-
-app.get('/username-check/:username', (req, res) => {
-	res.send(!getPlayers().map(p => p.username).includes(req.params.username))
+app.get('/username-check/:username', (req:any, res:any) => {
+	res.send(playerList().map(p => p!.username).includes(req.params.username))
 })
 
-io.on('connection', (socket) => {
+io.on('connection', (socket:any) => {
 	try{
 		const username = socket.handshake.query.username;
-		let player;
+		let player:Player;
 		const socketId = socket.id.toString();
 		console.log(`${username} joined the game.`);
-		const randomColor = settings.colors[Math.floor(Math.random() * settings.colors.length)];
-		connections[socketId] = (new Player(username, Math.random() * settings.width, Math.random() * settings.height, randomColor));
-		player = connections[socket.id];
+		const randomColor = Object.keys(settings.colors).map(key => settings.colors.get(key))[Math.floor(Math.random() * settings.colors.size)]?.name;
+		if(players.get(username)){
+			socket.disconnect();
+			return;
+		}
+		else{
+			players.set(username, new Player(username, Math.random() * settings.width, Math.random() * settings.height, randomColor ?? "errorColor"))
+		}
+		connections.set(socketId, username);
+		player = players.get(username)!;
 
-		socket.emit('initialize-game', {settings, players: getPlayers(), username});
+		socket.emit('initialize-game', {settings, players, username});
 		socket.broadcast.emit('player-joined', player);
 
 		// auto regenerate energy
@@ -56,16 +65,18 @@ io.on('connection', (socket) => {
 			socket.emit('gained-energy', username);
 		},settings.energyRegenSpeed * 1000);
 
-		socket.on('change-color', (colorName) => {
+		socket.on('change-color', (colorName:string) => {
 			console.log(`${username} changed color to ${colorName}`)
-			const selectedColor = settings.colors.find(c => c.name.toLowerCase() === colorName.toLowerCase());
-			player.color = selectedColor;
+			// make sure it's a real color
+			const selectedColor = settings.colors.get(colorName);
+			if(!selectedColor) return;
+			player.color = colorName;
 			io.emit('change-color', {username: player.username, color: selectedColor});
 		});
 
-		socket.on('move-player', (position) => {
+		socket.on('move-player', (position:Position) => {
 			// todo: check for collisions
-			const moved = player.move(position.x, position.y, getPlayers());
+			const moved = player.move(position.x, position.y, playerList());
 			if(moved){
 				io.emit('move-player', player);
 				console.log(`${username} moved to ${position.x},${position.y}`)
@@ -75,10 +86,9 @@ io.on('connection', (socket) => {
 			}
 		});
 
-		socket.on('shoot-location', (position) => {
+		socket.on('shoot-location', (position:Position) => {
 			// get player at that position
-			const players = getPlayers();
-			const playerAtPos = Object.keys(players).map((key) => players[key]).find(player => player.position.x === position.x && player.position.y === position.y);
+			const playerAtPos = playerList().find(player => player!.position.x === position.x && player!.position.y === position.y);
 			if(!playerAtPos){
 				console.log(`${username} shot at ${position.x},${position.y}, but there was nobody there`);
 			}
@@ -94,13 +104,17 @@ io.on('connection', (socket) => {
 		socket.on('disconnect', () => {
 			console.log(`${username} (${socketId}) disconnected.`);
 			io.emit('player-disconnect', username);
-			delete connections[socketId];
+			connections.delete(socketId);
+			players.delete(username);
 		})
 
-		socket.on('connect_error', (err) => console.log("something went wrong", err));
-	} catch(err){
+		socket.on('connect_error', (err:any) => console.log("something went wrong", err));
+	} catch(err:any){
 		console.error(err);
 	}
 });
 
 server.listen(port, () => console.log(`App is running on port ${port}.`));
+
+
+export {}

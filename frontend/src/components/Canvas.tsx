@@ -1,12 +1,12 @@
 import React, {useRef, useContext, useEffect, useState, createContext, useLayoutEffect} from "react"
 import ActionMenu from "./ActionMenu";
 import GameContext from "./GameContext";
-import Color from "../interfaces/Color";
-import Position from "../interfaces/Position"
-import Action from "../interfaces/Action"
+import Color from "../../../interfaces/Color";
+import Position from "../../../interfaces/Position"
+import Action from "../../../interfaces/Action"
 import { distance } from "../utils"
 import { propNames } from "@chakra-ui/react";
-import Player from "../interfaces/Player"
+import Player from "../../../interfaces/IPlayer"
 
 interface props {
     onMove: Function,

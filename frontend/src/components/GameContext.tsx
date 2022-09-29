@@ -1,6 +1,6 @@
 import React, { createContext, useState } from "react";
-import Player, {defaultPlayer} from "../interfaces/Player";
-import { defaultSettings } from "../interfaces/Settings";
+import Player, {defaultPlayer} from "../../../interfaces/IPlayer";
+import { defaultSettings } from "../../../interfaces/Settings";
 
 const GameContext = createContext({
     players: new Map<string,Player>(),

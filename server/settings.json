@@ -4,6 +4,22 @@
     "startingEnergy": 10,
     "energyRegenSpeed": 5,
     "canvasScale": 60,
-    "colors": ["#ff0000", "#00ff00", "#0000ff"],
+    "colors": [
+        {
+            "name": "red",
+            "softHex": "#f66",
+            "strongHex": "#f00"
+        },
+        {
+            "name": "green",
+            "strongHex": "#0f0",
+            "softHex": "6f6"
+        },
+        {
+            "name": "blue",
+            "strongHex": "#00f",
+            "softHex": "#66f"
+        }
+    ],
     "startingHealth": 10
 }

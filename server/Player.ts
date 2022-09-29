@@ -1,28 +1,35 @@
 const settings = require("./settings.json");
 const distance = require("./utils.js");
+import Position from "../interfaces/Position";
+import IPlayer from "../interfaces/IPlayer";
 
-class Player {
-	constructor(username,x,y,color){
+export default class Player implements IPlayer {
+
+    username:string;
+    position:Position;
+    color:string;
+    energy:number;
+    health:number;
+
+	constructor(username:string,x:number,y:number,color:string){
 		this.username = username;
-		this.position = {};
-        this.position.x = parseInt(x);
-		this.position.y = parseInt(y);
+		this.position = {x, y};
 		this.color = color;
-        this.energy = parseInt(settings.startingEnergy) ?? 1;
+        this.energy = settings.startingEnergy ?? 1;
         this.health = settings.startingHealth;
 	}
 
-    canSpendEnergy(amount){
+    canSpendEnergy(amount:number){
         return amount <= this.energy;
     }
 
-    spendEnergy(amount){
-        this.energy -= Math.abs(parseInt(amount));
+    spendEnergy(amount:number){
+        this.energy -= Math.abs(amount);
         if(this.energy < 0) this.energy = 0;
     }
 
-    takeDamage(amount){
-        this.health -= Math.abs(parseInt(amount));
+    takeDamage(amount:number){
+        this.health -= Math.abs(amount);
         if(this.health <= 0) this.health = 0;
     }
 
@@ -30,14 +37,14 @@ class Player {
         this.energy++;
     }
 
-    attemptShoot(x,y){
+    attemptShoot(x:number,y:number){
         const requiredEnergy = distance(this.position.x,this.position.y,x,y);
         if(this.canSpendEnergy(requiredEnergy) == false) return false;
         this.spendEnergy(requiredEnergy);
         return true;
     }
 
-	move(x, y, playerList){
+	move(x:number, y:number, playerList:Player[]){
 
         // compute energy
         const requiredEnergy = distance(this.position.x,this.position.y,x,y);
@@ -48,7 +55,7 @@ class Player {
         // check for player collisions
 		let collided = false;
 		playerList.forEach(p => {
-			if(p.x === x && p.y === y && p !== this){
+			if(p.position.x === x && p.position.y === y && p !== this){
 				collided = true;
 			}
 		})
@@ -58,12 +65,10 @@ class Player {
         this.position.x = x;
         this.position.y = y;
         
-		if(this.x >= settings.width) this.x = settings.width - 1;
-		if(this.x < 0) this.x = 0;
-		if(this.y >= settings.height) this.y = settings.height - 1;
-		if(this.y < 0) this.y = 0;
+		if(this.position.x >= settings.width) this.position.x = settings.width - 1;
+		if(this.position.x < 0) this.position.x = 0;
+		if(this.position.y >= settings.height) this.position.y = settings.height - 1;
+		if(this.position.y < 0) this.position.y = 0;
         return true;
 	}
 }
-
-module.exports = Player;

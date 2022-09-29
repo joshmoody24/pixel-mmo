@@ -1,8 +1,8 @@
 import React, {useState} from "react"
 import {Button, Popover, PopoverTrigger, PopoverContent, PopoverBody, PopoverFooter, PopoverHeader, PopoverCloseButton, PopoverArrow, ButtonGroup } from "@chakra-ui/react"
-import Position from '../interfaces/Position'
-import Action from "../interfaces/Action"
-import Player from "../interfaces/Player"
+import Position from '../../../interfaces/Position'
+import Action from "../../../interfaces/Action"
+import Player from "../../../interfaces/IPlayer"
 
 interface props {
     position: Position,

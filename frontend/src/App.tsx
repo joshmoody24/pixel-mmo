@@ -6,12 +6,12 @@ import Nav from "./components/Nav"
 import { Grid, GridItem } from '@chakra-ui/react'
 import Canvas from "./components/Canvas"
 import GameContext from './components/GameContext'
-import Player, { defaultPlayer } from './interfaces/Player'
-import Settings, { defaultSettings } from './interfaces/Settings'
+import Player, { defaultPlayer } from '../../interfaces/Player'
+import Settings, { defaultSettings } from '../../interfaces/Settings'
 import io from "socket.io-client"
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
-import Position from './interfaces/Position'
+import Position from '../../interfaces/Position'
 
 export default function App() {
 
@@ -48,9 +48,7 @@ export default function App() {
 
   const handleGameInitialization = useCallback((data: {settings:Settings, players:Map<string,Player>, username:string}) => {
     console.log("Initialized game", data);
-    const playerMap = new Map<string, Player>();
-    data.players.forEach(p => playerMap.set(p.username, p));
-    setPlayers(playerMap);
+    setPlayers(data.players);
     setSettings(data.settings);
     setUsername(data.username);
   },[]);
