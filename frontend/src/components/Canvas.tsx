@@ -117,13 +117,13 @@ export default function Canvas(props:props) {
         if(game.settings === null) return;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(210,255,255,255)';
+        ctx.fillStyle = 'rgba(255,255,255,255)';
         ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
         const scale = game.settings.canvasScale;
 
         // draw gridlines
         ctx.lineWidth="2"
-        ctx.strokeStyle = "rgba(100,100,100,.5)";
+        ctx.strokeStyle = "rgba(150,150,150,.5)";
         for(let x = 0; x < ctx.canvas.width; x+=scale){
             ctx.moveTo(x,0);
             ctx.lineTo(x,ctx.canvas.height);

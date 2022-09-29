@@ -36,7 +36,7 @@ export default function App() {
     newPlayers.set(data.hurtPlayer.username, data.hurtPlayer);
     newPlayers.set(data.attacker.username, data.attacker);
     setPlayers(newPlayers);
-  },[players])
+  },[])
 
   const movePlayer = useCallback((destination:Position) => {
     socket.emit('move-player', destination);
@@ -98,6 +98,7 @@ export default function App() {
   useEffect(() => {
     const subscribeToEvents = () => {
       if(!socket) return;
+      socket.removeAllListeners();
       socket.on('initialize-game', handleGameInitialization);
       socket.on('change-color', handleColorChange);
       socket.on('move-player', handleMove);
@@ -117,7 +118,8 @@ export default function App() {
       handleColorChange,
       handleDisconnect,
       handleGainedEnergy,
-      handleGameInitialization
+      handleGameInitialization,
+      handleTookDamage,
     ]
   );
 

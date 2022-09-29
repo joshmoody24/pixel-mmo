@@ -36,16 +36,17 @@ export default function ActionMenu(props:props) {
           closeOnBlur={false}
         >
           <PopoverTrigger>
-            <Button h={0} w={0} p={0} m={0} style={{visibility:"hidden",position:"absolute",left:props.position.x + "px",top:props.position.y + "px"}} colorScheme="pink" />
+            <div h={0} w={0} p={0} m={0} style={{visibility:"hidden",position:"absolute",left:props.position.x + "px",top:props.position.y + "px"}} />
           </PopoverTrigger>
-          <PopoverContent>
+          <PopoverContent style={{backgroundColor:"#fff3", backdropFilter:"blur(5px)",width:"auto"}}>
+            <PopoverArrow />
             <PopoverHeader fontWeight="semibold">{props.targetedPlayer ? `Enemy: ${props.targetedPlayer.username}` : "Actions"}</PopoverHeader>
             <PopoverCloseButton onClick={() => props.handleClose()} />
             <PopoverBody>
               {props.targetedPlayer ? enemyInfo : "Select an action"}
             </PopoverBody>
             <PopoverFooter justifyContent="flex-end">
-              <ButtonGroup size="sm">
+              <ButtonGroup>
                 {props.actions.map(action => (
                     <Button
                         onClick={() => {
@@ -55,6 +56,7 @@ export default function ActionMenu(props:props) {
                         key={action.name}
                         colorScheme={action.color}
                         disabled={action.disabled}
+                        style={{pointerEvents:"auto"}}
                     >
                         {action.name} ({Math.round(action.cost)})
                     </Button>
