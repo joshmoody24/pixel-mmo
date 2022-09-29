@@ -7,13 +7,13 @@ import Action from "../../../interfaces/Action"
 import { distance } from "../utils"
 import { propNames } from "@chakra-ui/react";
 import Player from "../../../interfaces/IPlayer"
+import {hexToRGB} from "../../../utils"
 
 interface props {
     onMove: Function,
     onShoot: Function,
 }
 export default function Canvas(props:props) {
-
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const game = useContext(GameContext);
 
@@ -26,11 +26,11 @@ export default function Canvas(props:props) {
     const [availableActions, setAvailableActions] = useState(new Array<Action>());
     const [targetedPlayer, setTargetedPlayer] = useState<Player | undefined>(undefined);
 
-    const squareWidth = (canvasRef.current?.clientWidth ?? 0) / game.settings.width;
+    const squareWidth = (canvasRef.current?.clientWidth ?? 0) / (game.settings?.width ?? 1);
     const spacing = 1.1;
-    console.log(squareWidth)
 
     function handleClick(event:any){
+        if(game.settings === null) return;
         event.stopPropagation();
         const relativeX = event.nativeEvent.offsetX / canvasRef.current!.clientWidth;
         const relativeY = event.nativeEvent.offsetY / canvasRef.current!.clientHeight;
@@ -99,20 +99,22 @@ export default function Canvas(props:props) {
         const context = canvas?.getContext('2d')
         resizeCanvas(context);        
         let animationFrameId:number;
-        const render = () => {
-          //frameCount++
-          drawGame(context, 0)
-          animationFrameId = window.requestAnimationFrame(render)
+        let frameCount:number = 0;
+        const render = (time:DOMHighResTimeStamp) => {
+            frameCount++
+            drawGame(context, time/1000)
+            animationFrameId = window.requestAnimationFrame(render)
         }
 
-        render()        
+        render(Date.now()/1000)        
 
         return () => {
           window.cancelAnimationFrame(animationFrameId)
         }
       }, [drawGame])
 
-    function drawGame(ctx:any, frameCount:number){
+    function drawGame(ctx:any, time:number){
+        if(game.settings === null) return;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.beginPath();
         ctx.fillStyle = 'rgba(210,255,255,255)';
@@ -135,12 +137,32 @@ export default function Canvas(props:props) {
 
         // draw each player
         game.players.forEach((player:Player, username:string) => {
-            ctx.fillStyle = `${player.color}`;
-            ctx.fillRect(player.position.x * scale, player.position.y * scale, scale, scale);
-            ctx.font = "32px arial";
-            ctx.fillStyle = "#333";
+            const color = game.settings!.colors.find(c => c.name === player.color);
+            if(!color) return;
+            // convert color to numbers we can do math on
+            let rgb = hexToRGB(color.strongHex);
+
+            const colorVariation = 0.25;
+            if(player.username === game.username){
+                rgb.r *= Math.sin(time*game.settings!.playerAnimationSpeed)*colorVariation+1+colorVariation;
+                rgb.g *= Math.sin(time*game.settings!.playerAnimationSpeed)*colorVariation+1+colorVariation;
+                rgb.b *= Math.sin(time*game.settings!.playerAnimationSpeed)*colorVariation+1+colorVariation;
+            }
+
+            // used to control scaling
+            const maxFluctuation = .075;
+            const reciprocal = 1/(maxFluctuation);
+            ctx.fillStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+            const center: Position = {x:(player.position.x + 0.5) * scale, y:(player.position.y+0.5) * scale}
+            const animatedScale = (Math.sin(time*game.settings!.playerAnimationSpeed)/reciprocal+maxFluctuation+1) * scale;
+            const radius = animatedScale/2;
+            ctx.fillRect(center.x - radius, center.y - radius, animatedScale, animatedScale);
+            /*
+            ctx.font = "28px arial";
+            ctx.fillStyle = "#000";
             ctx.textAlign = "center";
-            ctx.fillText(player.username, player.position.x*scale + scale/2, player.position.y*scale - scale*3/7);
+            ctx.fillText(player.username, player.position.x*scale + scale/2, player.position.y*scale + scale/1.5);
+            */
         });
     
         // draw the cursor
@@ -153,6 +175,7 @@ export default function Canvas(props:props) {
     }
     
     function resizeCanvas(ctx:any){
+        if(game.settings === null) return;
         const aspect = game.settings.width / game.settings.height;
         if(canvasRef.current!.parentElement!.clientWidth < canvasRef.current!.parentElement!.clientHeight){
             setDisplayWidth(canvasRef.current!.parentElement!.clientWidth);
@@ -165,8 +188,12 @@ export default function Canvas(props:props) {
     }
     
     const setBGColor = (color:Color) => {
-        document.body.style.backgroundColor = `${color.hex}44`;
+        document.body.style.backgroundColor = `${color.softHex}44`;
     };
+
+    if(game.settings === null){
+        return <>Loading...</>
+    }
 
     return (
         <>

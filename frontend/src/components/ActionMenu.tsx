@@ -56,7 +56,7 @@ export default function ActionMenu(props:props) {
                         colorScheme={action.color}
                         disabled={action.disabled}
                     >
-                        {action.name} ({action.cost})
+                        {action.name} ({Math.round(action.cost)})
                     </Button>
                 ))}
               </ButtonGroup>

@@ -6,7 +6,7 @@ import Nav from "./components/Nav"
 import { Grid, GridItem } from '@chakra-ui/react'
 import Canvas from "./components/Canvas"
 import GameContext from './components/GameContext'
-import Player, { defaultPlayer } from '../../interfaces/Player'
+import Player, { defaultPlayer } from '../../interfaces/IPlayer'
 import Settings, { defaultSettings } from '../../interfaces/Settings'
 import io from "socket.io-client"
 import Sidebar from './components/Sidebar'
@@ -18,7 +18,7 @@ export default function App() {
   const [socket, setSocket] = useState<any>(null);
   const [username, setUsername] = React.useState<string>("");
   const [players, setPlayers] = React.useState(new Map<string, Player>());
-  const [settings, setSettings] = React.useState<Settings>(defaultSettings);
+  const [settings, setSettings] = React.useState<Settings | null>(null);
 
   // use usecallback to memoize functions
 
@@ -47,14 +47,22 @@ export default function App() {
   },[socket])
 
   const handleGameInitialization = useCallback((data: {settings:Settings, players:Map<string,Player>, username:string}) => {
-    console.log("Initialized game", data);
-    setPlayers(data.players);
-    setSettings(data.settings);
-    setUsername(data.username);
+    try{
+      console.log("Initialized game", data);
+      const playerMap = new Map<string, Player>();
+      data.players.forEach((player:Player) => {
+        if(player) playerMap.set(player.username, player);
+      });
+      setPlayers(playerMap);
+      setSettings(data.settings);
+      setUsername(data.username);
+    } catch(err:any){
+      console.error(err)
+    }
   },[]);
 
   const handleColorChange = useCallback((data: {username:string, color:string}) => {
-    players.get(data.username)!.color = settings.colors.get(data.color) ?? "default";
+    players.get(data.username)!.color = settings?.colors.find(c => c.name === data.color)?.name ?? "default";
     setPlayers(players);
   },[players]);
 

@@ -1,9 +1,12 @@
-import Color from "./Color"
+import Color, { defaultColors } from "./Color"
 
 export default interface Settings{
     height: number,
     width: number,
     canvasScale: number,
-    colors: Map<string,Color>,
+    colors: Color[],
     energyRegenSpeed: number,
+    playerAnimationSpeed: number,
 }
+
+export const defaultSettings : Settings | null= null

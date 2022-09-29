@@ -1,7 +1,7 @@
 export default interface Color {
     name: string,
     softHex: string,
-    strongHex:string 
+    strongHex:string,
 }
 
 export const defaultColors : Color[] = [

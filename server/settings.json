@@ -4,21 +4,22 @@
     "startingEnergy": 10,
     "energyRegenSpeed": 5,
     "canvasScale": 60,
+    "playerAnimationSpeed": 6,
     "colors": [
         {
             "name": "red",
-            "softHex": "#f66",
-            "strongHex": "#f00"
+            "softHex": "#ff9999",
+            "strongHex": "#ff4444"
         },
         {
             "name": "green",
-            "strongHex": "#0f0",
-            "softHex": "6f6"
+            "strongHex": "#44ff44",
+            "softHex": "99ff99"
         },
         {
             "name": "blue",
-            "strongHex": "#00f",
-            "softHex": "#66f"
+            "strongHex": "#4444ff",
+            "softHex": "#9999ff"
         }
     ],
     "startingHealth": 10

@@ -19,7 +19,8 @@ const io = require("socket.io")(server, {
 	cors: {
 	  origin: "http://127.0.0.1:5173",
 	  methods: ["GET", "POST"]
-	}
+	},
+	wsEngine: require('ws').Server
   });app.use(express.static(publicPath));
 
 // <div class="popover bs-popover-auto fade show" role="tooltip" id="popover319061" data-popper-placement="right" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(362px, 213px);"><div class="popover-arrow" style="position: absolute; top: 0px; transform: translate(0px, 10px);"></div><h3 class="popover-header">Popover title</h3></div>
@@ -27,7 +28,8 @@ const io = require("socket.io")(server, {
 const connections =  new Map<string,string>();
 const players = new Map<string,Player>();
 
-const playerList = () => Object.keys(players).map((key) => players.get(key)!);
+const playerList = () => Array.from(players.keys()).map((key) => players.get(key)!);
+
 
 /*
 app.get('/game-data', (req, res) => {
@@ -45,8 +47,10 @@ io.on('connection', (socket:any) => {
 		let player:Player;
 		const socketId = socket.id.toString();
 		console.log(`${username} joined the game.`);
-		const randomColor = Object.keys(settings.colors).map(key => settings.colors.get(key))[Math.floor(Math.random() * settings.colors.size)]?.name;
+		const randomColor = settings.colors[Math.floor(Math.random() * settings.colors.length)]?.name;
 		if(players.get(username)){
+			console.log(players.get(username), players)
+			console.log("username already exists")
 			socket.disconnect();
 			return;
 		}
@@ -55,8 +59,8 @@ io.on('connection', (socket:any) => {
 		}
 		connections.set(socketId, username);
 		player = players.get(username)!;
-
-		socket.emit('initialize-game', {settings, players, username});
+		// for some reason, sending maps doesn't work.
+		socket.emit('initialize-game', {settings, players:playerList(), username});
 		socket.broadcast.emit('player-joined', player);
 
 		// auto regenerate energy
@@ -68,7 +72,7 @@ io.on('connection', (socket:any) => {
 		socket.on('change-color', (colorName:string) => {
 			console.log(`${username} changed color to ${colorName}`)
 			// make sure it's a real color
-			const selectedColor = settings.colors.get(colorName);
+			const selectedColor = settings.colors.find(c => c.name === colorName);
 			if(!selectedColor) return;
 			player.color = colorName;
 			io.emit('change-color', {username: player.username, color: selectedColor});

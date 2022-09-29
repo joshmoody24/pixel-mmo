@@ -1,5 +1,5 @@
 const settings = require("./settings.json");
-const distance = require("./utils.js");
+import {distance} from "../utils"
 import Position from "../interfaces/Position";
 import IPlayer from "../interfaces/IPlayer";
 
@@ -13,7 +13,7 @@ export default class Player implements IPlayer {
 
 	constructor(username:string,x:number,y:number,color:string){
 		this.username = username;
-		this.position = {x, y};
+		this.position = {x:Math.floor(x), y:Math.floor(y)};
 		this.color = color;
         this.energy = settings.startingEnergy ?? 1;
         this.health = settings.startingHealth;
@@ -24,12 +24,12 @@ export default class Player implements IPlayer {
     }
 
     spendEnergy(amount:number){
-        this.energy -= Math.abs(amount);
+        this.energy -= Math.abs(Math.round(amount));
         if(this.energy < 0) this.energy = 0;
     }
 
     takeDamage(amount:number){
-        this.health -= Math.abs(amount);
+        this.health -= Math.abs(Math.round(amount));
         if(this.health <= 0) this.health = 0;
     }
 
