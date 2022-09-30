@@ -52,6 +52,7 @@ export default function Canvas(props:props) {
     function updateActions(){
         // calculate possible actions
         const player = game.players.get(game.username);
+        if(!game.tilemap) return;
         const targetedPlayerArray = Array.from(game.players.entries()).find(([username, p]) => p.position.x === cursor.current.x && p.position.y === cursor.current.y);
         const targetedPlayer = targetedPlayerArray ? targetedPlayerArray[0] : undefined;
         const isTargetingPlayer = targetedPlayer !== undefined;
