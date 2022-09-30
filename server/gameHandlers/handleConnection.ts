@@ -30,10 +30,11 @@ export function handleConnection(io:any, connections:Map<string,string>, setting
             socket.broadcast.emit('player-joined', player);
         
             // auto regenerate energy
-            setInterval(() => {
+            const energyRegen = () => {
                 player.gainEnergy();
                 io.emit('gained-energy', {username, energy:player.energy});
-            },settings.energyRegenSpeed * 1000);
+            }
+            const energyTimer = setInterval(energyRegen,settings.energyRegenSpeed * 1000);
         
             socket.on('change-color', (colorName:string) => {
                 console.log(`${username} changed color to ${colorName}`)
@@ -63,6 +64,7 @@ export function handleConnection(io:any, connections:Map<string,string>, setting
                 io.emit('player-disconnect', username);
                 connections.delete(socketId);
                 players.delete(username);
+                clearInterval(energyTimer);
             })
         
             socket.on('connect_error', (err:any) => console.log("something went wrong", err));
