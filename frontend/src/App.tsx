@@ -20,7 +20,7 @@ export default function App() {
   const [username, setUsername] = React.useState<string>("");
   const [players, setPlayers] = React.useState(new Map<string, Player>());
   const [settings, setSettings] = React.useState<Settings | null>(null);
-  const [tilemap, setTilemap] = React.useState<Tilemap | null>(null);
+  const tilemap = React.useRef<Tilemap | null>(null);
 
   // use usecallback to memoize functions
 
@@ -58,7 +58,7 @@ export default function App() {
       setPlayers(playerMap);
       setSettings(data.settings);
       setUsername(data.username);
-      setTilemap(data.tilemap);
+      tilemap.current = data.tilemap;
     } catch(err:any){
       console.error(err)
     }
@@ -85,21 +85,18 @@ export default function App() {
     setPlayers(newPlayers);
   },[players]);
 
-  const handleGainedEnergy = useCallback((username:string) => {
-    if(!players.get(username)) return;
-    setPlayers(new Map(players.set(username, {...players.get(username)!, energy: players.get(username)!.energy + 1})));
+  const handleGainedEnergy = useCallback((data: {username:string, energy:number}) => {
+    if(!players.get(data.username)) return;
+    setPlayers(new Map(players.set(data.username, {...players.get(data.username)!, energy: data.energy})));
   },[players]);
 
   const handlePaintedTiles = (data: {tiles: Position[], painter:Player}) => {
     try{
-      console.log(data);
-      if(tilemap === null || tilemap.tiles === null) return;
+      if(tilemap.current === null || tilemap.current.tiles === null) return;
       data.tiles.forEach((tile:Position) => {
-        tilemap.tiles[tile.x][tile.y] = data.painter.color;
+        tilemap.current!.tiles[tile.x][tile.y] = data.painter.color;
       })
-      setTilemap(tilemap);
       players.set(data.painter.username, data.painter)
-      console.log(players.get(data.painter.username))
       setPlayers(new Map(players));
     } catch(err:any){
       console.error(err);
@@ -164,7 +161,7 @@ export default function App() {
       settings,
       cursor:{x:0,y:0,active:false},
       socket,
-      tilemap,
+      tilemap:tilemap.current,
     }}>
 
       <Nav />

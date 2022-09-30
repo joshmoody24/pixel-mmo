@@ -1,5 +1,5 @@
 const settings = require("./settings.json");
-import {distance} from "../utils"
+import {calcStraightLine, distance} from "../utils"
 import Position from "../interfaces/Position";
 import IPlayer from "../interfaces/IPlayer";
 
@@ -46,7 +46,7 @@ export default class Player implements IPlayer {
 	move(x:number, y:number, playerList:Player[], tiles:Array<Array<string>>){
 
         // compute energy
-        const requiredEnergy = distance(this.position.x,this.position.y,x,y);
+        const requiredEnergy = calcStraightLine(this.position, {x,y}).length
         if(this.canSpendEnergy(requiredEnergy) == false) return false;
 
         // clamp to bounds

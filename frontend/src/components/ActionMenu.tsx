@@ -1,4 +1,4 @@
-import React, {useState} from "react"
+import React, {MouseEvent, useState} from "react"
 import {Button, Popover, PopoverTrigger, PopoverContent, PopoverBody, PopoverFooter, PopoverHeader, PopoverCloseButton, PopoverArrow, ButtonGroup } from "@chakra-ui/react"
 import Position from '../../../interfaces/Position'
 import Action from "../../../interfaces/Action"
@@ -11,6 +11,7 @@ interface props {
     handleClose: Function,
     targetedPlayer?: Player,
     spacing?: number,
+    onAct: Function,
 }
 
 export default function ActionMenu(props:props) {
@@ -51,7 +52,7 @@ export default function ActionMenu(props:props) {
                     <Button
                         onClick={() => {
                           action.action()
-                          props.handleClose()
+                          //props.handleClose()
                         }}
                         key={action.name}
                         colorScheme={action.color}

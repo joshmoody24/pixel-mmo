@@ -5,7 +5,7 @@ import Color from "../../../interfaces/Color";
 import Position from "../../../interfaces/Position"
 import Action from "../../../interfaces/Action"
 import { distance } from "../utils"
-import { propNames } from "@chakra-ui/react";
+import { propNames, useFocusEffect } from "@chakra-ui/react";
 import Player from "../../../interfaces/IPlayer"
 import {calcStraightLine, hexToRGB} from "../../../utils"
 
@@ -20,11 +20,13 @@ export default function Canvas(props:props) {
     const [displayWidth, setDisplayWidth] = useState(0);
     const [displayHeight, setDisplayHeight] = useState(0);
 
-    const [cursorPos, setCursorPos] = useState<Position>({x:0,y:0})
+    const cursor = useRef<Position>({x:0,y:0})
     const [actionMenuPos, setActionMenuPos] = useState<Position>({x:0,y:0})
     const [showActionMenu, setShowActionMenu] = useState<boolean>(false);
     const [availableActions, setAvailableActions] = useState(new Array<Action>());
     const [targetedPlayer, setTargetedPlayer] = useState<string | undefined>(undefined);
+
+    const zoom = useRef(1);
 
     const squareWidth = (canvasRef.current?.clientWidth ?? 0) / (game.settings?.width ?? 1);
     const spacing = 1.1;
@@ -36,43 +38,49 @@ export default function Canvas(props:props) {
         const relativeY = event.nativeEvent.offsetY / canvasRef.current!.clientHeight;
         const x = Math.floor((relativeX * canvasRef.current!.width)/game.settings.canvasScale);
         const y = Math.floor((relativeY * canvasRef.current!.height)/game.settings.canvasScale);
-        setCursorPos({x,y})
+        const cursorPos = {x,y}
+        cursor.current = cursorPos;
 
         const popoverX = `${Math.floor((event.offsetX + canvasRef.current!.offsetLeft)/squareWidth)*squareWidth}px`
         const popoverY = `${Math.floor((event.offsetY + canvasRef.current!.offsetTop)/squareWidth)*squareWidth}px`
         setShowActionMenu(true);
         setActionMenuPos({x:event.pageX, y:event.pageY})
+        setTargetedPlayer(targetedPlayer);
+        updateActions();
+    }
 
+    function updateActions(){
         // calculate possible actions
         const player = game.players.get(game.username);
-        const targetedPlayerArray = Array.from(game.players.entries()).find(([username, p]) => p.position.x === x && p.position.y === y);
+        const targetedPlayerArray = Array.from(game.players.entries()).find(([username, p]) => p.position.x === cursor.current.x && p.position.y === cursor.current.y);
         const targetedPlayer = targetedPlayerArray ? targetedPlayerArray[0] : undefined;
-        console.log(targetedPlayerArray)
         const isTargetingPlayer = targetedPlayer !== undefined;
         // what color is the target position?
-        const targetColor = game.tilemap?.tiles[x][y];
+        const targetColor = game.tilemap!.tiles[cursor.current.x][cursor.current.y];
 
-        const energyCost = calcStraightLine(player!.position, {x,y}).length;
+        const energyCost = calcStraightLine(player!.position, cursor.current).length;
         
         const shoot = {
             name: "Shoot",
-            action: () => props.onShoot({x,y}),
+            action: () => props.onShoot(cursor.current),
             cost: energyCost,
             color: "red",
-            disabled: false,
+            disabled: energyCost > player!.energy,
         }
         const move = {
             name: "Move",
-            action: () => props.onMove({x,y}),
+            action: () => props.onMove(cursor.current),
             cost: energyCost,
             color: "blue",
-            disabled: isTargetingPlayer || targetColor !== player?.color,
+            disabled: isTargetingPlayer || targetColor !== player?.color || energyCost > player!.energy,
         }
-        const contextMenu = new Array<Action>();
         // is the mouse over a player
         setAvailableActions([move,shoot]);
-        setTargetedPlayer(targetedPlayer);
     }
+
+    useEffect(() => {
+        updateActions();
+    }, [game])
 
     useLayoutEffect(() => {
         window.addEventListener('resize', resizeCanvas);    
@@ -81,10 +89,7 @@ export default function Canvas(props:props) {
         return () => {
           window.removeEventListener('resize', resizeCanvas);
         }
-      }, []);
-
-
-
+    }, []);
 
     const requestRef = useRef<any>();
     const previousTimeRef = useRef<any>();
@@ -94,9 +99,22 @@ export default function Canvas(props:props) {
             const deltaTime = time - previousTimeRef.current;
         }
         previousTimeRef.current = time;
-        //drawGame(canvasRef.current!.getContext('2d'),0)
         requestRef.current = requestAnimationFrame(animate);
     }
+
+    useEffect(() => {
+
+        if(canvasRef.current === null) return;
+
+        canvasRef.current.onwheel = (event:any) => {
+            // adjust zoom level
+            const zoomSpeed = 0.001;
+            const zoomChange = event.deltaY * zoomSpeed;
+            zoom.current = zoom.current * (1 + zoomChange);
+            if(zoom.current < 0.75) zoom.current = 0.75
+            if(zoom.current > squareWidth/4) zoom.current = squareWidth/4;
+        };
+    },[canvasRef, zoom, drawGame])
 
     useEffect(() => {
     
@@ -122,30 +140,45 @@ export default function Canvas(props:props) {
         if(game.settings === null) return;
         if(game.tilemap === null || game.tilemap.tiles === null) return;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        const scale = game.settings.canvasScale;
+        
+        //transformations (not working with mouse position yet)
+        /*
+        const playerPos = game.players.get(game.username)?.position;
+        if(playerPos) ctx.translate(playerPos.x*scale+squareWidth, playerPos.y*scale+squareWidth);
+        ctx.scale(zoom.current,zoom.current);
+        if(playerPos) ctx.translate(-(playerPos.x*scale-squareWidth), -(playerPos.y*scale-squareWidth))
+        */
+
         ctx.beginPath();
         ctx.fillStyle = 'rgba(255,255,255,255)';
         ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
-        const scale = game.settings.canvasScale;
 
         // draw the paint
-        game.tilemap.tiles.forEach((row, rowIndex) => {
-            row.forEach((value, colIndex) => {
-                const color = game.settings!.colors.find(c => c.name === game.tilemap!.tiles[rowIndex][colIndex])
-                if(!color) return;
+        
+        for(let row = 0; row < game.tilemap.width; row++){
+            for(let col = 0; col < game.tilemap.height; col++){
+                const colorName = game.tilemap.tiles[row][col];
+                if(colorName === "") continue;
+                const color = game.settings!.colors.find(c => c.name === game.tilemap!.tiles[row][col])
+                if(!color) continue;
                 ctx.fillStyle = color.softHex;
-                ctx.fillRect(rowIndex * scale, colIndex * scale, scale, scale);
-            });
-        })
+                ctx.fillRect(row * scale, col * scale, scale, scale);
+            }
+        }        
 
         // draw gridlines
         ctx.lineWidth="2"
-        ctx.strokeStyle = "rgba(150,150,150,.5)";
+        ctx.strokeStyle = "#999";
         for(let x = 0; x < ctx.canvas.width; x+=scale){
+            ctx.beginPath();
             ctx.moveTo(x,0);
             ctx.lineTo(x,ctx.canvas.height);
             ctx.stroke();
         } 
         for(let y = 0; y < ctx.canvas.height; y+=scale){
+            ctx.beginPath();
             ctx.moveTo(0,y);
             ctx.lineTo(ctx.canvas.width, y);
             ctx.stroke();
@@ -188,8 +221,12 @@ export default function Canvas(props:props) {
             ctx.lineWidth = "10";
             ctx.strokeStyle = "grey";
             ctx.lineJoin = "round"
-            ctx.strokeRect(cursorPos.x * scale, cursorPos.y * scale, scale, scale);
+            ctx.strokeRect(cursor.current.x * scale, cursor.current.y * scale, scale, scale);
         }
+
+
+        // reset zoom level
+        ctx.setTransform(1,0,0,1,0,0);
     }
     
     function resizeCanvas(ctx:any){
@@ -229,6 +266,7 @@ export default function Canvas(props:props) {
             actions={availableActions}
             targetedPlayer={game.players.get(targetedPlayer ?? "")}
             spacing={squareWidth * spacing}
+            onAct={updateActions}
         />
         </>
     )

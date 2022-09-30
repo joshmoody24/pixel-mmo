@@ -1,7 +1,8 @@
 {
-    "width": 15,
-    "height": 15,
-    "startingEnergy": 10,
+    "width": 20,
+    "height": 20,
+    "startingEnergy": 20,
+    "startingHealth": 10,
     "energyRegenSpeed": 4,
     "canvasScale": 60,
     "playerAnimationSpeed": 7,
@@ -42,6 +43,5 @@
             "softHex": "#ffbbff",
             "variation": 0.1
         }
-    ],
-    "startingHealth": 10
+    ]
 }

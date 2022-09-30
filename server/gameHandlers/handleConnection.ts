@@ -32,7 +32,7 @@ export function handleConnection(io:any, connections:Map<string,string>, setting
             // auto regenerate energy
             setInterval(() => {
                 player.gainEnergy();
-                io.emit('gained-energy', username);
+                io.emit('gained-energy', {username, energy:player.energy});
             },settings.energyRegenSpeed * 1000);
         
             socket.on('change-color', (colorName:string) => {
