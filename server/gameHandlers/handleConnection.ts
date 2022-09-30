@@ -2,9 +2,10 @@ import Settings from "../../interfaces/Settings";
 import Player from "../Player";
 import Position from "../../interfaces/Position";
 import { handleShoot } from "./handleShoot";
+import Tilemap from "../../interfaces/Tilemap"
 
 
-export function handleConnection(io:any, connections:Map<string,string>, settings:Settings,players:Map<string,Player>) {
+export function handleConnection(io:any, connections:Map<string,string>, settings:Settings,players:Map<string,Player>, tilemap:Tilemap) {
     const playerList = () => Array.from(players.keys()).map((key) => players.get(key)!);
     try{
         io.on('connection', (socket:any) => {
@@ -25,13 +26,13 @@ export function handleConnection(io:any, connections:Map<string,string>, setting
             connections.set(socketId, username);
             player = players.get(username)!;
             // for some reason, sending maps doesn't work.
-            socket.emit('initialize-game', {settings, players:playerList(), username});
+            socket.emit('initialize-game', {settings, players:playerList(), username, tilemap});
             socket.broadcast.emit('player-joined', player);
         
             // auto regenerate energy
             setInterval(() => {
                 player.gainEnergy();
-                socket.emit('gained-energy', username);
+                io.emit('gained-energy', username);
             },settings.energyRegenSpeed * 1000);
         
             socket.on('change-color', (colorName:string) => {
@@ -45,7 +46,7 @@ export function handleConnection(io:any, connections:Map<string,string>, setting
         
             socket.on('move-player', (position:Position) => {
                 // todo: check for collisions
-                const moved = player.move(position.x, position.y, playerList());
+                const moved = player.move(position.x, position.y, playerList(), tilemap.tiles);
                 if(moved){
                     io.emit('move-player', player);
                     console.log(`${username} moved to ${position.x},${position.y}`)
@@ -55,7 +56,7 @@ export function handleConnection(io:any, connections:Map<string,string>, setting
                 }
             });
         
-            handleShoot(socket, io, playerList(), username);
+            handleShoot(socket, io, playerList(), username, tilemap);
         
             socket.on('disconnect', () => {
                 console.log(`${username} (${socketId}) disconnected.`);

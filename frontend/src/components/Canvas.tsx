@@ -7,7 +7,7 @@ import Action from "../../../interfaces/Action"
 import { distance } from "../utils"
 import { propNames } from "@chakra-ui/react";
 import Player from "../../../interfaces/IPlayer"
-import {hexToRGB} from "../../../utils"
+import {calcStraightLine, hexToRGB} from "../../../utils"
 
 interface props {
     onMove: Function,
@@ -24,7 +24,7 @@ export default function Canvas(props:props) {
     const [actionMenuPos, setActionMenuPos] = useState<Position>({x:0,y:0})
     const [showActionMenu, setShowActionMenu] = useState<boolean>(false);
     const [availableActions, setAvailableActions] = useState(new Array<Action>());
-    const [targetedPlayer, setTargetedPlayer] = useState<Player | undefined>(undefined);
+    const [targetedPlayer, setTargetedPlayer] = useState<string | undefined>(undefined);
 
     const squareWidth = (canvasRef.current?.clientWidth ?? 0) / (game.settings?.width ?? 1);
     const spacing = 1.1;
@@ -45,27 +45,33 @@ export default function Canvas(props:props) {
 
         // calculate possible actions
         const player = game.players.get(game.username);
-        const targetedPlayer = Array.from(game.players.entries()).find(([username, p]) => p.position.x === x && p.position.y === y)
+        const targetedPlayerArray = Array.from(game.players.entries()).find(([username, p]) => p.position.x === x && p.position.y === y);
+        const targetedPlayer = targetedPlayerArray ? targetedPlayerArray[0] : undefined;
+        console.log(targetedPlayerArray)
         const isTargetingPlayer = targetedPlayer !== undefined;
+        // what color is the target position?
+        const targetColor = game.tilemap?.tiles[x][y];
+
+        const energyCost = calcStraightLine(player!.position, {x,y}).length;
         
         const shoot = {
             name: "Shoot",
             action: () => props.onShoot({x,y}),
-            cost: Math.ceil(distance(player!.position.x,player!.position.y, x, y)),
+            cost: energyCost,
             color: "red",
-            disabled: !isTargetingPlayer,
+            disabled: false,
         }
         const move = {
             name: "Move",
             action: () => props.onMove({x,y}),
-            cost: Math.ceil(distance(player!.position.x,player!.position.y, x, y)),
+            cost: energyCost,
             color: "blue",
-            disabled: isTargetingPlayer,
+            disabled: isTargetingPlayer || targetColor !== player?.color,
         }
         const contextMenu = new Array<Action>();
         // is the mouse over a player
         setAvailableActions([move,shoot]);
-        setTargetedPlayer(targetedPlayer ? targetedPlayer[1] : undefined);
+        setTargetedPlayer(targetedPlayer);
     }
 
     useLayoutEffect(() => {
@@ -92,7 +98,6 @@ export default function Canvas(props:props) {
         requestRef.current = requestAnimationFrame(animate);
     }
 
-
     useEffect(() => {
     
         const canvas = canvasRef.current
@@ -115,11 +120,22 @@ export default function Canvas(props:props) {
 
     function drawGame(ctx:any, time:number){
         if(game.settings === null) return;
+        if(game.tilemap === null || game.tilemap.tiles === null) return;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.beginPath();
         ctx.fillStyle = 'rgba(255,255,255,255)';
         ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
         const scale = game.settings.canvasScale;
+
+        // draw the paint
+        game.tilemap.tiles.forEach((row, rowIndex) => {
+            row.forEach((value, colIndex) => {
+                const color = game.settings!.colors.find(c => c.name === game.tilemap!.tiles[rowIndex][colIndex])
+                if(!color) return;
+                ctx.fillStyle = color.softHex;
+                ctx.fillRect(rowIndex * scale, colIndex * scale, scale, scale);
+            });
+        })
 
         // draw gridlines
         ctx.lineWidth="2"
@@ -133,7 +149,7 @@ export default function Canvas(props:props) {
             ctx.moveTo(0,y);
             ctx.lineTo(ctx.canvas.width, y);
             ctx.stroke();
-        } 
+        }
 
         // draw each player
         game.players.forEach((player:Player, username:string) => {
@@ -142,8 +158,9 @@ export default function Canvas(props:props) {
             // convert color to numbers we can do math on
             let rgb = hexToRGB(color.strongHex);
 
-            const colorVariation = 0.25;
-            if(player.username === game.username){
+            const colorVariation = color.variation;
+            const controlledPlayer = player.username === game.username;
+            if(controlledPlayer){
                 rgb.r *= Math.sin(time*game.settings!.playerAnimationSpeed)*colorVariation+1+colorVariation;
                 rgb.g *= Math.sin(time*game.settings!.playerAnimationSpeed)*colorVariation+1+colorVariation;
                 rgb.b *= Math.sin(time*game.settings!.playerAnimationSpeed)*colorVariation+1+colorVariation;
@@ -155,8 +172,9 @@ export default function Canvas(props:props) {
             ctx.fillStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
             const center: Position = {x:(player.position.x + 0.5) * scale, y:(player.position.y+0.5) * scale}
             const animatedScale = (Math.sin(time*game.settings!.playerAnimationSpeed)/reciprocal+maxFluctuation+1) * scale;
-            const radius = animatedScale/2;
-            ctx.fillRect(center.x - radius, center.y - radius, animatedScale, animatedScale);
+            const finalScale = controlledPlayer ? animatedScale : scale;
+            const radius = controlledPlayer ? animatedScale/2 : scale/2;
+            ctx.fillRect(center.x - radius, center.y - radius, finalScale, finalScale);
             /*
             ctx.font = "28px arial";
             ctx.fillStyle = "#000";
@@ -209,7 +227,7 @@ export default function Canvas(props:props) {
             isOpen={showActionMenu}
             handleClose={() => setShowActionMenu(false)}
             actions={availableActions}
-            targetedPlayer={targetedPlayer}
+            targetedPlayer={game.players.get(targetedPlayer ?? "")}
             spacing={squareWidth * spacing}
         />
         </>

@@ -12,6 +12,7 @@ import io from "socket.io-client"
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import Position from '../../interfaces/Position'
+import Tilemap from '../../interfaces/Tilemap'
 
 export default function App() {
 
@@ -19,6 +20,7 @@ export default function App() {
   const [username, setUsername] = React.useState<string>("");
   const [players, setPlayers] = React.useState(new Map<string, Player>());
   const [settings, setSettings] = React.useState<Settings | null>(null);
+  const [tilemap, setTilemap] = React.useState<Tilemap | null>(null);
 
   // use usecallback to memoize functions
 
@@ -36,7 +38,7 @@ export default function App() {
     newPlayers.set(data.hurtPlayer.username, data.hurtPlayer);
     newPlayers.set(data.attacker.username, data.attacker);
     setPlayers(newPlayers);
-  },[])
+  },[players])
 
   const movePlayer = useCallback((destination:Position) => {
     socket.emit('move-player', destination);
@@ -46,7 +48,7 @@ export default function App() {
     socket.emit('shoot-location', position);
   },[socket])
 
-  const handleGameInitialization = useCallback((data: {settings:Settings, players:Map<string,Player>, username:string}) => {
+  const handleGameInitialization = useCallback((data: {settings:Settings, players:Map<string,Player>, username:string, tilemap:Tilemap}) => {
     try{
       console.log("Initialized game", data);
       const playerMap = new Map<string, Player>();
@@ -56,6 +58,7 @@ export default function App() {
       setPlayers(playerMap);
       setSettings(data.settings);
       setUsername(data.username);
+      setTilemap(data.tilemap);
     } catch(err:any){
       console.error(err)
     }
@@ -87,6 +90,22 @@ export default function App() {
     setPlayers(new Map(players.set(username, {...players.get(username)!, energy: players.get(username)!.energy + 1})));
   },[players]);
 
+  const handlePaintedTiles = (data: {tiles: Position[], painter:Player}) => {
+    try{
+      console.log(data);
+      if(tilemap === null || tilemap.tiles === null) return;
+      data.tiles.forEach((tile:Position) => {
+        tilemap.tiles[tile.x][tile.y] = data.painter.color;
+      })
+      setTilemap(tilemap);
+      players.set(data.painter.username, data.painter)
+      console.log(players.get(data.painter.username))
+      setPlayers(new Map(players));
+    } catch(err:any){
+      console.error(err);
+    }
+  }
+
   // create socket connection
   function createSocketSonnection(username:string) {
     setUsername(username)
@@ -106,6 +125,7 @@ export default function App() {
       socket.on('player-joined', handlePlayerJoined);
       socket.on('gained-energy', handleGainedEnergy);
       socket.on('took-damage', handleTookDamage);
+      socket.on('painted-tiles', handlePaintedTiles);
       return () => {
         socket.close();
       }
@@ -120,6 +140,7 @@ export default function App() {
       handleGainedEnergy,
       handleGameInitialization,
       handleTookDamage,
+      handlePaintedTiles,
     ]
   );
 
@@ -143,6 +164,7 @@ export default function App() {
       settings,
       cursor:{x:0,y:0,active:false},
       socket,
+      tilemap,
     }}>
 
       <Nav />

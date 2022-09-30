@@ -2,24 +2,45 @@
     "width": 15,
     "height": 15,
     "startingEnergy": 10,
-    "energyRegenSpeed": 5,
+    "energyRegenSpeed": 4,
     "canvasScale": 60,
-    "playerAnimationSpeed": 6,
+    "playerAnimationSpeed": 7,
     "colors": [
         {
             "name": "red",
-            "softHex": "#ff9999",
-            "strongHex": "#ff4444"
+            "softHex": "#ffaaaa",
+            "strongHex": "#ff4444",
+            "variation": 0.1
+        },
+        {
+            "name": "orange",
+            "softHex": "#ffcc99",
+            "strongHex": "#ffaa33",
+            "variation": 0.02
+        },
+        {
+            "name": "yellow",
+            "softHex": "#ffff99",
+            "strongHex": "#ffff33",
+            "variation": 0.02
         },
         {
             "name": "green",
             "strongHex": "#44ff44",
-            "softHex": "99ff99"
+            "softHex": "#aaffaa",
+            "variation": 0.1
         },
         {
             "name": "blue",
-            "strongHex": "#4444ff",
-            "softHex": "#9999ff"
+            "strongHex": "#3355ff",
+            "softHex": "#99bbff",
+            "variation": 0.15
+        },
+        {
+            "name": "magenta",
+            "strongHex": "#dd33dd",
+            "softHex": "#ffbbff",
+            "variation": 0.1
         }
     ],
     "startingHealth": 10

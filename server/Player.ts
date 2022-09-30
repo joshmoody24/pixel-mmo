@@ -37,20 +37,23 @@ export default class Player implements IPlayer {
         this.energy++;
     }
 
-    attemptShoot(x:number,y:number){
-        const requiredEnergy = distance(this.position.x,this.position.y,x,y);
-        if(this.canSpendEnergy(requiredEnergy) == false) return false;
-        this.spendEnergy(requiredEnergy);
+    attemptShoot(x:number,y:number,energyCost:number){
+        if(this.canSpendEnergy(energyCost) == false) return false;
+        this.spendEnergy(energyCost);
         return true;
     }
 
-	move(x:number, y:number, playerList:Player[]){
+	move(x:number, y:number, playerList:Player[], tiles:Array<Array<string>>){
 
         // compute energy
         const requiredEnergy = distance(this.position.x,this.position.y,x,y);
         if(this.canSpendEnergy(requiredEnergy) == false) return false;
 
-        this.spendEnergy(requiredEnergy);
+        // clamp to bounds
+        if(x >= settings.width) x = settings.width - 1;
+		if(x < 0) x = 0;
+		if(y >= settings.height) y = settings.height - 1;
+		if(y < 0) y = 0;
 
         // check for player collisions
 		let collided = false;
@@ -62,13 +65,11 @@ export default class Player implements IPlayer {
 
         if(collided) return false;
 
+        if(tiles[x][y] !== this.color) return false;
+
+        this.spendEnergy(requiredEnergy);
         this.position.x = x;
         this.position.y = y;
-        
-		if(this.position.x >= settings.width) this.position.x = settings.width - 1;
-		if(this.position.x < 0) this.position.x = 0;
-		if(this.position.y >= settings.height) this.position.y = settings.height - 1;
-		if(this.position.y < 0) this.position.y = 0;
         return true;
 	}
 }

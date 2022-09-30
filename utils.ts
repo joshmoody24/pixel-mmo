@@ -15,7 +15,7 @@ export function hexToRGB(hex:string){
     };
 }
 
-export function calcStraightLine (startCoordinates:Position, endCoordinates:Position) {
+export function calcStraightLine (startCoordinates:Position, endCoordinates:Position, stripEdges=true) {
     var coordinatesArray = new Array<Position>();
     // Translate coordinates
     var x1 = startCoordinates.x;
@@ -45,5 +45,6 @@ export function calcStraightLine (startCoordinates:Position, endCoordinates:Posi
         coordinatesArray.push({x:x1,y:y1});
     }
     // Return the result
-    return coordinatesArray;
+    if(stripEdges) return coordinatesArray.slice(1);
+    else return coordinatesArray;
 }
